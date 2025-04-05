@@ -1,0 +1,222 @@
+-- xOxMacrosxOx De xMSx, Protege tus xmacros si el name de el player no esta en la lista no podra usar los xscripts.
+
+local allowedNames = {
+  "Rosalia",  -- Juanchis
+  "Rush",     -- Juanchis
+  "Rushino",   -- Juanchis
+  "Rushinito",  -- Juanchis
+  "Bibidi babidi buu",   -- Juanchis
+  "Mexcaly",
+  "namee",
+  "name8",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+}
+
+if not table.find(allowedNames, name(), true) then
+  -- Mostrar un cuadro de información en lugar de una ventana de texto
+  modules.corelib.displayInfoBox(tr("Error"), name() .. ", Tu no tienes permitido usar estos scripts.", "Scripts Underbot")
+  return
+end
+
+modules.game_textmessage.displayGameMessage("Scripts Protegidos Cargados.")
+
+setDefaultTab("Hp")
+
+local label = UI.Label(" H E A L   &   POTION")
+label:setColor("#a73ec1") -- Color base
+label:setFont("verdana-11px-rounded")
+
+local glowPosition = 1
+local glowDirection = 1
+
+macro(50, function()
+    local text = " H E A L   &   P O T I O N"
+    local numChars = #text
+    local glowRange = math.max(1, math.floor(numChars / 10)) 
+    local coloredText = {}
+
+    for i = 1, numChars do
+        local char = text:sub(i, i)
+        local color = "#a73ec1" -- Color base
+        if math.abs(i - glowPosition) <= glowRange then
+            color = "#dfbae9" -- Color de brillo
+        end
+        table.insert(coloredText, char)
+        table.insert(coloredText, color)
+    end
+
+    glowPosition = glowPosition + glowDirection
+    if glowPosition > numChars then
+        glowPosition = numChars - 1
+        glowDirection = -1
+    elseif glowPosition < 1 then
+        glowPosition = 2
+        glowDirection = 1
+    end
+
+    label:setColoredText(coloredText)
+end)
+UI.Separator()
+
+-- HP
+if type(storage.healing1) ~= "table" then
+  storage.healing1 = {on=false, title="HP%", text="exura", min=76, max=93}
+end
+if type(storage.healing2) ~= "table" then
+  storage.healing2 = {on=false, title="HP%", text="exura vita", min=0, max=75}
+end
+
+-- create 2 healing widgets
+for _, healingInfo in ipairs({storage.healing1, storage.healing2}) do
+  local healingmacro = macro(600, function()
+    local hp = player:getHealthPercent()
+    if healingInfo.max >= hp and hp >= healingInfo.min then
+      if TargetBot then 
+        TargetBot.saySpell(healingInfo.text) -- sync spell with targetbot if available
+      else
+        say(healingInfo.text)
+      end
+    end
+  end)
+  healingmacro.setOn(healingInfo.on)
+
+  UI.DualScrollPanel(healingInfo, function(widget, newParams) 
+    healingInfo = newParams
+    healingmacro.setOn(healingInfo.on)
+  end)
+end
+UI.Separator()
+-- Pociones & Runas
+local labelpot = UI.Label("Pociones/Runas")
+labelpot:setColor("#00FFFF") -- celeste
+
+if type(storage.hpitem1) ~= "table" then
+  storage.hpitem1 = {on=false, title="HP%", item=266, min=51, max=90}
+end
+if type(storage.hpitem2) ~= "table" then
+  storage.hpitem2 = {on=false, title="HP%", item=3160, min=0, max=50}
+end
+if type(storage.manaitem1) ~= "table" then
+  storage.manaitem1 = {on=false, title="MP%", item=238, min=0, max=60}
+end
+if type(storage.manaitem2) ~= "table" then
+  storage.manaitem2 = {on=false, title="MP%", item=3157, min=0, max=50}
+end
+
+for i, healingInfo in ipairs({storage.hpitem1, storage.hpitem2, storage.manaitem1, storage.manaitem2}) do
+  local healingmacro = macro(400, function()
+    local hp = i <= 2 and player:getHealthPercent() or math.min(100, math.floor(100 * (player:getMana() / player:getMaxMana())))
+    if healingInfo.max >= hp and hp >= healingInfo.min then
+      if TargetBot then 
+        TargetBot.useItem(healingInfo.item, healingInfo.subType, player) -- sync spell with targetbot if available
+      else
+        local thing = g_things.getThingType(healingInfo.item)
+        local subType = g_game.getClientVersion() >= 860 and 0 or 1
+        if thing and thing:isFluidContainer() then
+          subType = healingInfo.subType
+        end
+        g_game.useInventoryItemWith(healingInfo.item, player, subType)
+      end
+    end
+  end)
+  healingmacro.setOn(healingInfo.on)
+
+  UI.DualScrollItemPanel(healingInfo, function(widget, newParams) 
+    healingInfo = newParams
+    healingmacro.setOn(healingInfo.on and healingInfo.item > 100)
+  end)
+end
+
+if g_game.getClientVersion() < 860 then
+  UI.Label("In old tibia potions & runes work only when you have backpack with them opened")
+end
+UI.Separator()
+-- Utamo Vita
+local labelutamo = UI.Label("Utamo Vita")
+labelutamo:setColor("#00FFFF") -- celeste
+
+UI.TextEdit(storage.manaShield or "utamo vita", function(widget, newText)
+  storage.manaShield = newText
+end)
+
+local lastManaShield = 0
+
+macro(20, "Mana Shield", function() 
+  if not hasManaShield() and lastManaShield + 1000 < now then  -- Si no tienes el hechizo activo y han pasado 500ms
+    if TargetBot then 
+      TargetBot.saySpell(storage.manaShield) -- Usa TargetBot si está activo
+    else
+      say(storage.manaShield)
+    end
+    lastManaShield = now -- Guarda el tiempo del ultimo casteo
+  end
+end)
+
+-- Haste
+local labelhaste = UI.Label("Haste")
+labelhaste:setColor("#00FFFF") -- celeste
+
+UI.TextEdit(storage.hasteSpell or "utani gran hur", function(widget, newText)
+  storage.hasteSpell = newText
+end)
+
+macro(500, "Haste", function() 
+  if hasHaste() then return end
+  if TargetBot then 
+    TargetBot.saySpell(storage.hasteSpell) -- sync spell with targetbot if available
+  else
+    say(storage.hasteSpell)
+  end
+end)
+
+-- Tira Haste Cuando No Detecte Monster
+local spellHaste = "Utani Gran Hur"
+local hasteInPz = true -- Usar haste en PZ.
+
+macro(500, "Haste NO Monsters", function()
+    if not hasteInPz and isInPz() then 
+        return 
+    end
+
+    if hasHaste() then 
+        return 
+    end
+
+    local function monstersinScreen()
+        for _, spec in ipairs(getSpectators()) do
+            if spec ~= player and spec:isMonster() then
+                return true
+            end
+        end
+        return false
+    end
+
+    if not monstersinScreen() then
+        say(spellHaste)
+    end
+end)
+
+-- Antiparalyze
+local labelparalyze = UI.Label("Antiparalyze")
+labelparalyze:setColor("#00FFFF") -- celeste
+UI.TextEdit(storage.antiParalyze or "utani gran hur", function(widget, newText)
+  storage.antiParalyze = newText
+end)
+
+macro(20, "Anti Paralyze", function() 
+  if not isParalyzed() then return end
+  if TargetBot then 
+    TargetBot.saySpell(storage.antiParalyze) -- sync spell with targetbot if available
+  else
+    say(storage.antiParalyze)
+  end
+end)

@@ -1,0 +1,1887 @@
+-- xOxMacrosxOx De xMSx, Protege tus xmacros si el name de el player no esta en la lista no podra usar los xscripts.
+
+local allowedNames = {
+  "Rosalia",  -- Juanchis
+  "Rush",     -- Juanchis
+  "Rushino",   -- Juanchis
+  "Rushinito",  -- Juanchis
+  "Bibidi babidi buu",   -- Juanchis
+  "Mexcaly",
+  "namee",
+  "name8",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+}
+
+if not table.find(allowedNames, name(), true) then
+  -- Mostrar un cuadro de información en lugar de una ventana de texto
+  modules.corelib.displayInfoBox(tr("Error"), name() .. ", Tu no tienes permitido usar estos scripts.", "Scripts Underbot")
+  return
+end
+
+modules.game_textmessage.displayGameMessage("Scripts Protegidos Cargados.")
+
+setDefaultTab("Main")
+local commandModuleName = "commandModule"
+if type(storage[commandModuleName]) ~= "table" then
+    storage[commandModuleName] = {}
+end
+
+local commandModuleConfig = storage[commandModuleName]
+
+local commandModuleUI = setupUI([[
+Panel
+  height: 20
+  type: anchor
+
+  Button
+    id: editCommandList
+    anchors.top: prev.bottom
+    anchors.horizontalCenter: parent.horizontalCenter
+    text-align: center
+    width: 130
+    margin-top: 0
+    margin-bottom: 0
+    text: Lista Comandos
+    color: #00FFFF
+    font: verdana-11px-rounded
+]])
+
+commandModuleUI:setId(commandModuleName)
+
+local favoriteModuleName = "favoriteModule"
+if type(storage[favoriteModuleName]) ~= "table" then
+    storage[favoriteModuleName] = {}
+end
+
+local favoriteModuleUI = setupUI([[
+Panel
+  margin-top: 5
+  layout:
+    type: verticalBox
+    fit-children: true
+]])
+
+favoriteModuleUI:setId(favoriteModuleName)
+
+g_ui.loadUIFromString([[
+CommandListsWindow < MainWindow
+  size: 710 330
+  id: parent
+  !text: tr('Lista De Comandos')
+  color: #00FFFF
+  @onEscape: self:hide()
+
+  Panel
+    id: firstPanel
+    image-source: /images/ui/menubox
+    padding: 7
+    width: 138
+    height: 210
+    anchors.top: parent.top
+    anchors.left: parent.left
+    margin-top: 10
+    layout:
+      type: anchor
+      fit-children: true
+
+    Label
+      id: toolsLabel
+      text-align: center
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.top: parent.top
+      width: 115
+      margin-top: -20
+      margin-left: 2
+      text: "Tools"
+      color: #FFFFFF
+      font: verdana-11px-rounded
+      layout:
+        type: anchor
+
+    Button
+      id: broadcastButton
+      !tooltip: tr('Manda mensaje a tu guild.')
+      anchors.left: parent.left
+      anchors.top: parent.top
+      margin-top: 4
+      margin-left: -1
+      text: Guild Mensaje
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: broadcastFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: refreshbonusesButton
+      !tooltip: tr('!Cambia de sexo por comando.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Change Sex
+      font: cipsoftFont
+
+    CheckBox
+      size: 18 18
+      id: refreshbonusesFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: teleportButton
+      !tooltip: tr('Muestra una lista de tus magias spells.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 4
+      margin-left: -1
+      text: Spells
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: teleportFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: jumpButton
+      !tooltip: tr('Deshabilita los frascos de las pociones.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Vials
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: jumpFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: meltButton
+      !tooltip: tr('Te muestra un numero de items que tienes ala venta en el !market.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Market
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: meltFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: depositButton
+      !tooltip: tr('Deposit all your Gold to the bank.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Deposit Gold
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: depositFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: transfer1gmcButton
+      !tooltip: tr('Transfer 1 GMC to a player. Use the field below to set the players name.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Transfer 1 GMC
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: transfer1gmcFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: transfersetgmcButton
+      !tooltip: tr('Transfer a specified amount of GMC to another player. Use the fields below to set the players name and ammount.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Transfer Money
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: transfersetgmcFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+  Label
+    id: broadcastmessageLabel
+    anchors.top: firstPanel.bottom
+    anchors.left: firstPanel.left
+    text-offset: 4 3
+    image-source: /images/ui/button
+    imagecolor: #2de0d7
+    image-border: 1
+    width: 125
+    height: 18
+    margin-top: 4
+    margin-left: 5
+    text: "Mensaje Guild:"
+    color: #00FFFF
+    font: verdana-11px-rounded
+
+  UITextEdit
+    id: broadcastText
+    color: #FF0000
+    text-offset: 0 4
+    padding: 2
+    size: 500 18
+    anchors.top: firstPanel.bottom
+    anchors.left: broadcastmessageLabel.right 
+    margin-top: 4
+    margin-left: 3
+    image-source: /images/ui/textedit
+    image-border: 8
+    selection-color: #272727
+    selection-background-color: #cccccc
+    change-cursor-image: true
+    $disabled:
+      color: #27272788
+      opacity: 0.5
+      change-cursor-image: false
+    text:
+
+  Label
+    id: deathlistLabel
+    anchors.top: broadcastmessageLabel.bottom
+    anchors.left: firstPanel.left
+    text-offset: 4 3
+    image-source: /images/ui/button
+    imagecolor: #2de0d7
+    image-border: 1
+    width: 90
+    height: 18
+    margin-top: 4
+    margin-left: 5
+    text: "Death List of:"
+    color: #00FFFF
+    font: verdana-11px-rounded
+
+  UITextEdit
+    id: deathlistText
+    color: #FF0000
+    text-offset: 0 4
+    padding: 2
+    size: 215 18
+    anchors.top: broadcastText.bottom
+    anchors.left: deathlistLabel.right
+    margin-top: 4
+    margin-left: 3
+    image-source: /images/ui/textedit
+    image-border: 8
+    selection-color: #272727
+    selection-background-color: #cccccc
+    change-cursor-image: true
+    $disabled:
+      color: #27272788
+      opacity: 0.5
+      change-cursor-image: false
+    text:
+
+  Label
+    id: transfersetgmcLabel
+    anchors.top: broadcastmessageLabel.bottom
+    anchors.left: deathlistText.right
+    text-offset: 4 3
+    image-source: /images/ui/button
+    imagecolor: #2de0d7
+    image-border: 1
+    width: 107
+    height: 18
+    margin-top: 4
+    margin-left: 5
+    text: "Money Ammount:"
+    color: #00FFFF
+    font: verdana-11px-rounded
+
+  UITextEdit
+    id: transfersetgmcText
+    color: #FF0000
+    text-offset: 0 4
+    padding: 2
+    size: 200 18
+    anchors.top: broadcastText.bottom
+    anchors.left: transfersetgmcLabel.right
+    margin-top: 4
+    margin-left: 3
+    image-source: /images/ui/textedit
+    image-border: 8
+    selection-color: #272727
+    selection-background-color: #cccccc
+    change-cursor-image: true
+    $disabled:
+      color: #27272788
+      opacity: 0.5
+      change-cursor-image: false
+    text:
+
+  Label
+    id: transferplayerLabel
+    anchors.top: transfersetgmcLabel.bottom
+    anchors.left: dishonorplayerText.right
+    text-offset: 4 3
+    image-source: /images/ui/button
+    imagecolor: #2de0d7
+    image-border: 1
+    width: 107
+    height: 18
+    margin-top: 4
+    margin-left: 5
+    text: "Transfer Player:"
+    color: #00FFFF
+    font: verdana-11px-rounded
+
+  UITextEdit
+    id: transferplayerText
+    color: #FF0000
+    text-offset: 0 4
+    padding: 2
+    size: 200 18
+    anchors.top: transfersetgmcText.bottom
+    anchors.left: transferplayerLabel.right
+    margin-top: 4
+    margin-left: 3
+    image-source: /images/ui/textedit
+    image-border: 8
+    selection-color: #272727
+    selection-background-color: #cccccc
+    change-cursor-image: true
+    $disabled:
+      color: #27272788
+      opacity: 0.5
+      change-cursor-image: false
+    text:
+
+  Label
+    id: dishonorplayerLabel
+    anchors.top: deathlistLabel.bottom
+    anchors.left: firstPanel.left
+    text-offset: 4 3
+    image-source: /images/ui/button
+    imagecolor: #2de0d7
+    image-border: 1
+    width: 105
+    height: 18
+    margin-top: 4
+    margin-left: 5
+    text: "Pay to Dishonor:"
+    color: #00FFFF
+    font: verdana-11px-rounded
+
+  UITextEdit
+    id: dishonorplayerText
+    color: #FF0000
+    text-offset: 0 4
+    padding: 2
+    size: 200 18
+    anchors.top: deathlistText.bottom
+    anchors.left: dishonorplayerLabel.right
+    margin-top: 4
+    margin-left: 3
+    image-source: /images/ui/textedit
+    image-border: 8
+    selection-color: #272727
+    selection-background-color: #cccccc
+    change-cursor-image: true
+    $disabled:
+      color: #27272788
+      opacity: 0.5
+      change-cursor-image: false
+    text:
+
+  Panel
+    id: secondPanel
+    image-source: /images/ui/menubox
+    padding: 7
+    width: 138
+    height: 210
+    anchors.verticalCenter: parent.verticalCenter
+    anchors.left: firstPanel.right
+    margin-left: -1
+    margin-top: -24
+    layout:
+      type: anchor
+      fit-children: true
+
+    Label
+      id: informationLabel
+      text-align: center
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.top: parent.top
+      width: 115
+      margin-top: -20
+      margin-left: 2
+      text: "Player Comandos"
+      color: #FFFFFF
+      font: verdana-11px-rounded
+      layout:
+        type: anchor
+
+    Button
+      id: pvpmodeButton
+      !tooltip: tr('Comprar la bless.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 11
+      margin-left: -1
+      text: Bless
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: pvpmodeFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: taskinfoButton
+      !tooltip: tr('Repara las softboots por comando.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Reparar Soft
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: taskinfoFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: cosmeticsinfoButton
+      !tooltip: tr('Muestra cuanto tiempo te queda de Bonusexp.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Exptoken
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: cosmeticsinfoFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: maxhealthmanaButton
+      !tooltip: tr('Muestra en tiempo el nivel q has estado sin subir de level y el tiempo jugado.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Played
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: maxhealthmanaFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: showfragsButton
+      !tooltip: tr('Muestra la lista de frags del dia semana & mes que tienes.') 
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Show Frags
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: showfragsFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: showbosskillsButton
+      !tooltip: tr('Muestra el Magic find que tienes.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Magic Find
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: showbosskillsFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: showdoublehitButton
+      !tooltip: tr('Muestra tu dinero y token que llevas contigo.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Money & Tokens
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: showdoublehitFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+      
+    Button
+      id: statsButton
+      !tooltip: tr('Muestra el bonus de tu equipamento.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Stats
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: statsFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+  Panel
+    id: thirdPanel
+    image-source: /images/ui/menubox
+    padding: 7
+    width: 138
+    height: 210
+    anchors.verticalCenter: parent.verticalCenter
+    anchors.left: secondPanel.right
+    margin-left: -1
+    margin-top: -24
+    layout:
+      type: anchor
+      fit-children: true
+
+    Label
+      id: purchasingLabel
+      text-align: center
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.top: parent.top
+      width: 115
+      margin-top: -20
+      margin-left: 2
+      text: "House"
+      color: #FFFFFF
+      font: verdana-11px-rounded
+      layout:
+        type: anchor
+
+    Button
+      id: buyfirstpromotionButton
+      !tooltip: tr('Compra cualquier casa que este vacia.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 11
+      margin-left: -1
+      text: Buy House
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: buyfirstpromotionFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: buysecondpromotionButton
+      !tooltip: tr('Comprar casa inactiva de x jugador.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Resell
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: buysecondpromotionFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: buyhotapieceButton
+      !tooltip: tr('Abandonar casa.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Leave House
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: buyhotapieceFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: buypowergemButton
+      !tooltip: tr('Dale permiso a players para entrar ala casa.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Aleta Sio
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: buypowergemFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: buyoutfitsButton
+      !tooltip: tr('Dale permiso para poder abrir y cerrar puertas de la casa.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Aleta Som
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: buyoutfitsFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+      
+    Button
+      id: lazyswordButton
+      !tooltip: tr('Solo los lunes puedes hacer uso de Bonus exp skill sword fighting.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Lazymonday Sword
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: lazyswordFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+      
+    Button
+      id: lazyclubButton
+      !tooltip: tr('Solo los lunes puedes hacer uso de Bonus exp skill club fighting.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: LazyMonday Club
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: lazyclubFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+      
+    Button
+      id: lazyaxeButton
+      !tooltip: tr('Solo los lunes puedes hacer uso de Bonus exp skill axe fighting.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: LazyMonday Axe
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: lazyaxeFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+  Panel
+    id: fourthPanel
+    image-source: /images/ui/menubox
+    padding: 7
+    width: 138
+    height: 210
+    anchors.verticalCenter: parent.verticalCenter
+    anchors.left: thirdPanel.right
+    margin-left: -1
+    margin-top: -24
+    layout:
+      type: anchor
+      fit-children: true
+
+    Label
+      id: serverdetailsLabel
+      text-align: center
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.top: parent.top
+      width: 115
+      margin-top: -20
+      margin-left: 2
+      text: "Server Detalles"
+      color: #FFFFFF
+      font: verdana-11px-rounded
+      layout:
+        type: anchor
+
+    Button
+      id: deathlistButton
+      !tooltip: tr('Tells you of a players death history.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 11
+      margin-left: -1
+      text: Death List
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: deathlistFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: onlineButton
+      !tooltip: tr('Shows a list of the current online players.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Online
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: onlineFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: serverinfoButton
+      !tooltip: tr('Shows server information.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Server Info
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: serverinfoFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+      
+    Button
+      id: timeButton
+      !tooltip: tr('Muestra la hora del server & el proximo evento.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Server Time
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: timeFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: serveruptimeButton
+      !tooltip: tr('Shows how long the server has been running.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Server Uptime
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: serveruptimeFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+      
+    Button
+      id: eventButton
+      !tooltip: tr('Entra al evento que salio.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Evento
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: eventFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+      
+    Button
+      id: triviaButton
+      !tooltip: tr('Muestra una ventana para contestar la trivia.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: Trivia
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: triviaFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+      
+    Button
+      id: lazydistanceButton
+      !tooltip: tr('Solo los lunes puedes hacer uso de Bonus exp skill distance fighting.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: LazyMonday Dist
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: lazydistanceFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+  Panel
+    id: fifthPanel
+    image-source: /images/ui/menubox
+    padding: 7
+    width: 138
+    height: 210
+    anchors.verticalCenter: parent.verticalCenter
+    anchors.left: fourthPanel.right
+    margin-left: -1
+    margin-top: -24
+    layout:
+      type: anchor
+      fit-children: true
+
+    Label
+      id: globalbonusesLabel
+      text-align: center
+      anchors.horizontalCenter: parent.horizontalCenter
+      anchors.top: parent.top
+      width: 115
+      margin-top: -20
+      margin-left: 2
+      text: "Live & AFK"
+      color: #FFFFFF
+      font: verdana-11px-rounded
+      layout:
+        type: anchor
+
+    Button
+      id: globalbonusButton
+      !tooltip: tr('Enciende el Livestream para que otros players puedan ver.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 11
+      margin-left: -1
+      text: "Live On"
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: globalbonusFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: freeglobalbonusexpButton
+      !tooltip: tr('Activa el texto modo AFK.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: "Live Off"
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: freeglobalbonusexpFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: freeglobalbonuslootButton
+      !tooltip: tr('Activa el texto modo AFK.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: "AFK On"
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: freeglobalbonuslootFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer
+
+    Button
+      id: freeglobalbonuschancesButton
+      !tooltip: tr('Desactiva el texto modo AFK.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: "AFK Off"
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: freeglobalbonuschancesFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer  
+
+  Button
+    id: closeButton
+    !text: tr('Close')
+    font: verdana-11px-rounded
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    size: 45 21
+    margin-top: 15
+
+  ResizeBorder
+    id: bottomResizeBorder
+    anchors.fill: separator
+    height: 3
+    minimum: 170
+    maximum: 245
+    margin-left: 3
+    margin-right: 3
+    background: #ffffff88
+]])
+
+local rootWidget = g_ui.getRootWidget()
+if rootWidget then
+    commandModuleWindow = UI.createWindow('CommandListsWindow', rootWidget)
+    commandModuleWindow:hide()
+
+    commandModuleUI.editCommandList.onClick = function(widget)
+        commandModuleWindow:show()
+        commandModuleWindow:raise()
+        commandModuleWindow:focus()
+    end
+
+    commandModuleWindow.closeButton.onClick = function(widget)
+	    storage[commandModuleName] = commandModuleConfig
+        commandModuleWindow:hide()
+    end
+end
+
+local duplicatedButtons = {} -- Store references to duplicated buttons
+
+function duplicateButton(originalButton, parentPanel, checkbox)
+    local newButton = g_ui.createWidget('Button', parentPanel)
+
+    local originalHeight = originalButton:getHeight()
+
+    newButton:setFont(originalButton:getFont())
+    newButton:setText(originalButton:getText())
+	newButton:setHeight(18)
+
+    -- Set anchors for the new button
+    newButton:setMarginTop(1)
+    newButton:setMarginBottom(1)
+    newButton:setMarginLeft(15)  -- Adjust the left margin if needed
+    newButton:setMarginRight(15) -- Adjust the right margin if needed
+
+    -- Update the height of the parent panel only if the checkbox is checked
+    if checkbox and checkbox:isChecked() then
+        parentPanel:setHeight(parentPanel:getHeight() + originalHeight + 15)
+    end
+
+    -- Store reference to the duplicated button
+    duplicatedButtons[newButton:getText()] = newButton
+    return newButton
+end
+
+function removeDuplicateButton(originalButton, parentPanel, checkbox)
+    local buttonToRemove = duplicatedButtons[originalButton:getText()]
+    if buttonToRemove then
+        print("Removing button with Text:", buttonToRemove:getText())
+        print("Parent panel children:", parentPanel:getChildCount())
+        buttonToRemove:destroy()
+        parentPanel:setHeight(parentPanel:getHeight() - buttonToRemove:getHeight() - 15)
+
+        -- Remove the reference to the duplicated button
+        duplicatedButtons[originalButton:getText()] = nil
+    else
+        print("Button not found:", originalButton:getText())
+    end
+end
+
+-- Function to create a button and set up event handling
+function createButtonAndSetupEvents(originalButton, parentPanel, checkbox, moduleName, onClickFunction)
+    checkbox.onCheckChange = function(_, checked)
+        if checked then
+            local newButton = duplicateButton(originalButton, parentPanel, checkbox)
+            newButton.onClick = onClickFunction
+
+            -- Store information about the favorite in the storage table
+            if not commandModuleConfig[moduleName] then
+                commandModuleConfig[moduleName] = {}
+            end
+            table.insert(commandModuleConfig[moduleName], originalButton:getText())
+
+            -- Save the favorites to the storage table immediately
+            storage[commandModuleName] = commandModuleConfig
+
+            -- Print the button name when added to favorites
+            print("Added to favorites:", originalButton:getText())
+
+        else
+            removeDuplicateButton(originalButton, parentPanel, checkbox)
+
+            -- Remove information about the favorite
+            local favorites = commandModuleConfig[moduleName]
+            if favorites then
+                for i, favorite in ipairs(favorites) do
+                    if favorite == originalButton:getText() then
+                        table.remove(favorites, i)
+                        break
+                    end
+                end
+            end
+
+            -- Save the updated favorites to the storage table immediately
+            storage[commandModuleName] = commandModuleConfig
+
+            -- Print the button name when removed from favorites
+            print("Removed from favorites:", originalButton:getText())
+        end
+    end
+end
+
+-- Function to create a button and set up event handling
+function createFavoriteButtonAndSetupEvents(originalButton, parentPanel, checkbox, moduleName, onClickFunction)
+    checkbox.onCheckChange = function(_, checked)
+        if checked then
+            local newButton = duplicateButton(originalButton, parentPanel, checkbox)
+
+            -- Store information about the favorite in the storage table
+            if not commandModuleConfig[moduleName] then
+                commandModuleConfig[moduleName] = {}
+            end
+            table.insert(commandModuleConfig[moduleName], originalButton:getText())
+
+            -- Save the favorites to the storage table immediately
+            storage[commandModuleName] = commandModuleConfig
+            print("Saved:", commandModuleName, storage[commandModuleName])
+
+        else
+            removeDuplicateButton(originalButton, parentPanel, checkbox)
+
+            -- Remove information about the favorite
+            local favorites = commandModuleConfig[moduleName]
+            if favorites then
+                for i, favorite in ipairs(favorites) do
+                    if favorite == originalButton:getText() then
+                        table.remove(favorites, i)
+                        break
+                    end
+                end
+            end
+
+            -- Save the updated favorites to the storage table immediately
+            storage[commandModuleName] = commandModuleConfig
+        end
+    end
+
+    originalButton.onClick = onClickFunction
+
+end
+
+
+-- Function to load stored favorites
+function loadFavorites(moduleName, parentPanel)
+    local favoritesModule = commandModuleConfig[moduleName]
+    if favoritesModule then
+        for _, favoriteText in ipairs(favoritesModule) do
+            local originalButton = parentPanel:recursiveGetChildById(favoriteText .. "Button")
+            local checkbox = parentPanel:recursiveGetChildById(favoriteText .. "Favorite")
+
+            if originalButton and checkbox then
+                checkbox:setChecked(true)
+                duplicateButton(originalButton, parentPanel, checkbox)
+            end
+        end
+    end
+end
+
+-- Iterate over your button-checkbox pairs and set up event handling
+local buttonCheckboxPairs = {
+    -- First Panel Section
+    {originalButton = commandModuleWindow.firstPanel.broadcastButton, checkbox = commandModuleWindow.firstPanel.broadcastFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.firstPanel.refreshbonusesButton, checkbox = commandModuleWindow.firstPanel.refreshbonusesFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.firstPanel.teleportButton, checkbox = commandModuleWindow.firstPanel.teleportFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.firstPanel.jumpButton, checkbox = commandModuleWindow.firstPanel.jumpFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.firstPanel.meltButton, checkbox = commandModuleWindow.firstPanel.meltFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.firstPanel.depositButton, checkbox = commandModuleWindow.firstPanel.depositFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.firstPanel.transfer1gmcButton, checkbox = commandModuleWindow.firstPanel.transfer1gmcFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.firstPanel.transfersetgmcButton, checkbox = commandModuleWindow.firstPanel.transfersetgmcFavorite, moduleName = commandModuleName},
+
+    -- Second Panel Section
+    {originalButton = commandModuleWindow.secondPanel.pvpmodeButton, checkbox = commandModuleWindow.secondPanel.pvpmodeFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.secondPanel.taskinfoButton, checkbox = commandModuleWindow.secondPanel.taskinfoFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.secondPanel.cosmeticsinfoButton, checkbox = commandModuleWindow.secondPanel.cosmeticsinfoFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.secondPanel.maxhealthmanaButton, checkbox = commandModuleWindow.secondPanel.maxhealthmanaFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.secondPanel.showfragsButton, checkbox = commandModuleWindow.secondPanel.showfragsFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.secondPanel.showbosskillsButton, checkbox = commandModuleWindow.secondPanel.showbosskillsFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.secondPanel.showdoublehitButton, checkbox = commandModuleWindow.secondPanel.showdoublehitFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.secondPanel.statsButton, checkbox = commandModuleWindow.secondPanel.statsFavorite, moduleName = commandModuleName},
+
+    -- Third Panel Section
+    {originalButton = commandModuleWindow.thirdPanel.buyfirstpromotionButton, checkbox = commandModuleWindow.thirdPanel.buyfirstpromotionFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.thirdPanel.buysecondpromotionButton, checkbox = commandModuleWindow.thirdPanel.buysecondpromotionFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.thirdPanel.buyhotapieceButton, checkbox = commandModuleWindow.thirdPanel.buyhotapieceFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.thirdPanel.buypowergemButton, checkbox = commandModuleWindow.thirdPanel.buypowergemFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.thirdPanel.buyoutfitsButton, checkbox = commandModuleWindow.thirdPanel.buyoutfitsFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.thirdPanel.lazyswordButton, checkbox = commandModuleWindow.thirdPanel.lazyswordFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.thirdPanel.lazyclubButton, checkbox = commandModuleWindow.thirdPanel.lazyclubFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.thirdPanel.lazyaxeButton, checkbox = commandModuleWindow.thirdPanel.lazyaxeFavorite, moduleName = commandModuleName},
+
+    -- Fourth Panel Section
+    {originalButton = commandModuleWindow.fourthPanel.deathlistButton, checkbox = commandModuleWindow.fourthPanel.deathlistFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.fourthPanel.onlineButton, checkbox = commandModuleWindow.fourthPanel.onlineFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.fourthPanel.serverinfoButton, checkbox = commandModuleWindow.fourthPanel.serverinfoFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.fourthPanel.timeButton, checkbox = commandModuleWindow.fourthPanel.timeFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.fourthPanel.serveruptimeButton, checkbox = commandModuleWindow.fourthPanel.serveruptimeFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.fourthPanel.eventButton, checkbox = commandModuleWindow.fourthPanel.eventFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.fourthPanel.triviaButton, checkbox = commandModuleWindow.fourthPanel.triviaFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.fourthPanel.distanceButton, checkbox = commandModuleWindow.fourthPanel.lazydistanceFavorite, moduleName = commandModuleName},
+
+    -- Fifth Panel Section
+    {originalButton = commandModuleWindow.fifthPanel.freeglobalbonusexpButton, checkbox = commandModuleWindow.fifthPanel.freeglobalbonusexpFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.fifthPanel.freeglobalbonuslootButton, checkbox = commandModuleWindow.fifthPanel.freeglobalbonuslootFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.fifthPanel.freeglobalbonuschancesButton, checkbox = commandModuleWindow.fifthPanel.freeglobalbonuschancesFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.fifthPanel.freeglobalbonusexpButton, checkbox = commandModuleWindow.fifthPanel.freeglobalbonusexpFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.fifthPanel.globalbonusButton, checkbox = commandModuleWindow.fifthPanel.globalbonusFavorite, moduleName = commandModuleName},
+}
+
+for _, pair in ipairs(buttonCheckboxPairs) do
+    local originalButton = pair.originalButton
+    local checkbox = pair.checkbox
+    local moduleName = pair.moduleName
+
+    createButtonAndSetupEvents(originalButton, favoriteModuleUI, checkbox, moduleName)
+    loadFavorites(moduleName, favoriteModuleUI)
+end
+
+-- First Panel Section for functions and button connectors
+function onBroadcastButtonClick()
+    local broadcastText = commandModuleWindow:recursiveGetChildById('broadcastText')
+    local message = broadcastText and broadcastText:getText() or ""
+
+    -- Save the ast message to storage
+    storage.astMessage = message
+
+    say("!bg " .. message)
+end
+
+function onRefreshBonusesButtonClick()
+    say("!changegender")
+end
+
+function onTeleportButtonClick()
+    say("!spells")
+end
+
+function onJumpButtonClick()
+    say("!vial on")
+end
+
+function onMeltButtonClick()
+    say("!market")
+end
+
+function onDepositButtonClick()
+    say("!deposit all")
+end
+
+function onTransfer1GMCButtonClick()
+    local transferplayerText = commandModuleWindow:recursiveGetChildById('transferplayerText')
+    local playerName = transferplayerText and transferplayerText:getText() or ""
+
+    -- Save the player name to storage
+    storage.transferplayerName = playerName
+
+    say("!transfer " .. playerName .. ", 100000000")
+end
+
+function onTransferSetGMCButtonClick()
+    local transfersetgmcText = commandModuleWindow:recursiveGetChildById('transfersetgmcText')
+    local transferplayerText = commandModuleWindow:recursiveGetChildById('transferplayerText')   
+    local message = transfersetgmcText and transfersetgmcText:getText() or ""
+    local playerName = transferplayerText and transferplayerText:getText() or ""
+
+    -- Save the player name and ammount to storage
+    storage.transfersetgmcMessage = message
+    storage.transferplayerName = playerName
+
+    say("!transfer " .. playerName .. ", " .. message)
+end
+
+-- Original on click functions
+commandModuleWindow.firstPanel.broadcastButton.onClick = onBroadcastButtonClick
+commandModuleWindow.firstPanel.refreshbonusesButton.onClick = onRefreshBonusesButtonClick
+commandModuleWindow.firstPanel.teleportButton.onClick = onTeleportButtonClick
+commandModuleWindow.firstPanel.jumpButton.onClick = onJumpButtonClick
+commandModuleWindow.firstPanel.meltButton.onClick = onMeltButtonClick
+commandModuleWindow.firstPanel.depositButton.onClick = onDepositButtonClick
+commandModuleWindow.firstPanel.transfer1gmcButton.onClick = onTransfer1GMCButtonClick
+commandModuleWindow.firstPanel.transfersetgmcButton.onClick = onTransferSetGMCButtonClick
+
+-- Favorite on click functions
+createButtonAndSetupEvents(commandModuleWindow.firstPanel.broadcastButton, favoriteModuleUI, commandModuleWindow.firstPanel.broadcastFavorite, commandModuleName, onBroadcastButtonClick)
+
+createButtonAndSetupEvents(commandModuleWindow.firstPanel.refreshbonusesButton, favoriteModuleUI, commandModuleWindow.firstPanel.refreshbonusesFavorite, commandModuleName, onRefreshBonusesButtonClick)
+
+createButtonAndSetupEvents(commandModuleWindow.firstPanel.teleportButton, favoriteModuleUI, commandModuleWindow.firstPanel.teleportFavorite, commandModuleName, onTeleportButtonClick)
+
+createButtonAndSetupEvents(commandModuleWindow.firstPanel.jumpButton, favoriteModuleUI, commandModuleWindow.firstPanel.jumpFavorite, commandModuleName, onJumpButtonClick)
+
+createButtonAndSetupEvents(commandModuleWindow.firstPanel.meltButton, favoriteModuleUI, commandModuleWindow.firstPanel.meltFavorite, commandModuleName, onMeltButtonClick)
+
+createButtonAndSetupEvents(commandModuleWindow.firstPanel.depositButton, favoriteModuleUI, commandModuleWindow.firstPanel.depositFavorite, commandModuleName, onDepositButtonClick)
+
+createButtonAndSetupEvents(commandModuleWindow.firstPanel.transfer1gmcButton, favoriteModuleUI, commandModuleWindow.firstPanel.transfer1gmcFavorite, commandModuleName, onTransfer1GMCButtonClick)
+
+createButtonAndSetupEvents(commandModuleWindow.firstPanel.transfersetgmcButton, favoriteModuleUI, commandModuleWindow.firstPanel.transfersetgmcFavorite, commandModuleName, onTransferSetGMCButtonClick)
+
+-- Second Panel Section for functions and button connectors
+function onPvpModeButtonClick()
+    say("!bless")
+end
+
+function onTaskInfoButtonClick()
+    say("!softboots")
+end
+
+function onCosmeticsInfoButtonClick()
+    say("!exptoken")
+end
+
+function onMaxHealthManaButtonClick()
+    say("!played")
+end
+
+function onShowFragsButtonClick()
+    say("!frags")
+end
+
+function onShowBossKillsButtonClick()
+    say("!mf")
+end
+
+function onShowDoubleHitButtonClick()
+    say("!money")
+end
+
+function onStatsButtonClick()
+    say("!stats")
+end
+
+-- Original on click functions
+commandModuleWindow.secondPanel.pvpmodeButton.onClick = onPvpModeButtonClick
+commandModuleWindow.secondPanel.taskinfoButton.onClick = onTaskInfoButtonClick
+commandModuleWindow.secondPanel.cosmeticsinfoButton.onClick = onCosmeticsInfoButtonClick
+commandModuleWindow.secondPanel.maxhealthmanaButton.onClick = onMaxHealthManaButtonClick
+commandModuleWindow.secondPanel.showfragsButton.onClick = onShowFragsButtonClick
+commandModuleWindow.secondPanel.showbosskillsButton.onClick = onShowBossKillsButtonClick
+commandModuleWindow.secondPanel.showdoublehitButton.onClick = onShowDoubleHitButtonClick
+commandModuleWindow.secondPanel.statsButton.onClick = onStatsButtonClick
+
+-- Favorites on click functions
+createButtonAndSetupEvents(commandModuleWindow.secondPanel.pvpmodeButton, favoriteModuleUI, commandModuleWindow.secondPanel.pvpmodeFavorite, commandModuleName, onPvpModeButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.secondPanel.taskinfoButton, favoriteModuleUI, commandModuleWindow.secondPanel.taskinfoFavorite, commandModuleName, onTaskInfoButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.secondPanel.cosmeticsinfoButton, favoriteModuleUI, commandModuleWindow.secondPanel.cosmeticsinfoFavorite, commandModuleName, onCosmeticsInfoButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.secondPanel.maxhealthmanaButton, favoriteModuleUI, commandModuleWindow.secondPanel.maxhealthmanaFavorite, commandModuleName, onMaxHealthManaButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.secondPanel.showfragsButton, favoriteModuleUI, commandModuleWindow.secondPanel.showfragsFavorite, commandModuleName, onShowFragsButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.secondPanel.showbosskillsButton, favoriteModuleUI, commandModuleWindow.secondPanel.showbosskillsFavorite, commandModuleName, onShowBossKillsButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.secondPanel.showdoublehitButton, favoriteModuleUI, commandModuleWindow.secondPanel.showdoublehitFavorite, commandModuleName, onShowDoubleHitButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.secondPanel.statsButton, favoriteModuleUI, commandModuleWindow.secondPanel.statsFavorite, commandModuleName, onStatsButtonClick)
+
+-- Third Panel Section for functions and button connectors
+function onBuyFirstPromotionButtonClick()
+    say("!buyhouse")
+end
+
+function onBuySecondPromotionButtonClick()
+    say("!resell")
+end
+
+function onBuyHotaPieceButtonClick()
+    say("!leavehouse")
+end
+
+function onBuyPowerGemButtonClick()
+    say("aleta sio")
+end
+
+function onBuyOutfitsButtonClick()
+    say("aleta som")
+end
+
+function onLazySwordButtonClick()
+    say("!lazymonday sword")
+end
+
+function onLazyClubButtonClick()
+    say("!lazymonday club")
+end
+
+function onLazyAxeButtonClick()
+    say("!lazymonday axe")
+end
+
+-- Original on click functions
+commandModuleWindow.thirdPanel.buyfirstpromotionButton.onClick = onBuyFirstPromotionButtonClick
+commandModuleWindow.thirdPanel.buysecondpromotionButton.onClick = onBuySecondPromotionButtonClick
+commandModuleWindow.thirdPanel.buyhotapieceButton.onClick = onBuyHotaPieceButtonClick
+commandModuleWindow.thirdPanel.buypowergemButton.onClick = onBuyPowerGemButtonClick
+commandModuleWindow.thirdPanel.buyoutfitsButton.onClick = onBuyOutfitsButtonClick
+commandModuleWindow.thirdPanel.lazyswordButton.onClick = onLazySwordButtonClick
+commandModuleWindow.thirdPanel.lazyclubButton.onClick = onLazyClubButtonClick
+commandModuleWindow.thirdPanel.lazyaxeButton.onClick = onLazyAxeButtonClick
+
+-- Favorites on click functions
+createButtonAndSetupEvents(commandModuleWindow.thirdPanel.buyfirstpromotionButton, favoriteModuleUI, commandModuleWindow.thirdPanel.buyfirstpromotionFavorite, commandModuleName, onBuyFirstPromotionButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.thirdPanel.buysecondpromotionButton, favoriteModuleUI, commandModuleWindow.thirdPanel.buysecondpromotionFavorite, commandModuleName, onBuySecondPromotionButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.thirdPanel.buyhotapieceButton, favoriteModuleUI, commandModuleWindow.thirdPanel.buyhotapieceFavorite, commandModuleName, onBuyHotaPieceButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.thirdPanel.buypowergemButton, favoriteModuleUI, commandModuleWindow.thirdPanel.buypowergemFavorite, commandModuleName, onBuyPowerGemButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.thirdPanel.buyoutfitsButton, favoriteModuleUI, commandModuleWindow.thirdPanel.buyoutfitsFavorite, commandModuleName, onBuyOutfitsButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.thirdPanel.lazyswordButton, favoriteModuleUI, commandModuleWindow.thirdPanel.lazyswordFavorite, commandModuleName, onLazySwordButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.thirdPanel.lazyclubButton, favoriteModuleUI, commandModuleWindow.thirdPanel.lazyclubFavorite, commandModuleName, onLazyClubButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.thirdPanel.lazyaxeButton, favoriteModuleUI, commandModuleWindow.thirdPanel.lazyaxeFavorite, commandModuleName, onLazyAxeButtonClick)
+
+-- Fourth Panel Section for functions and button connectors
+function onDeathlistButtonClick()
+    local deathlistText = commandModuleWindow:recursiveGetChildById('deathlistText')
+    local message = deathlistText and deathlistText:getText() or ""
+
+    -- Save the broadcast message to storage
+    storage.deathlistMessage = message
+
+    say("!deathlist " .. message)
+end
+
+function onOnlineButtonClick()
+    say("!online")
+end
+
+function onServerInfoButtonClick()
+    say("!serverinfo")
+end
+
+function onTimeButtonClick()
+    say("!time")
+end
+
+function onServerUptimeButtonClick()
+    say("!uptime")
+end
+
+function onEventButtonClick()
+    say("!event")
+end
+
+function onTriviaButtonClick()
+    say("!trivia")
+end
+
+function onLazyDistanceButtonClick()
+    say("!lazymonday distance")
+end
+-- Original on click functions
+commandModuleWindow.fourthPanel.deathlistButton.onClick = onDeathlistButtonClick
+commandModuleWindow.fourthPanel.onlineButton.onClick = onOnlineButtonClick
+commandModuleWindow.fourthPanel.serverinfoButton.onClick = onServerInfoButtonClick
+commandModuleWindow.fourthPanel.timeButton.onClick = onTimeButtonClick
+commandModuleWindow.fourthPanel.serveruptimeButton.onClick = onServerUptimeButtonClick
+commandModuleWindow.fourthPanel.eventButton.onClick = onEventButtonClick
+commandModuleWindow.fourthPanel.triviaButton.onClick = onTriviaButtonClick
+commandModuleWindow.fourthPanel.lazydistanceButton.onClick = onLazyDistanceButtonClick
+
+-- Favorites on click functions
+createButtonAndSetupEvents(commandModuleWindow.fourthPanel.deathlistButton, favoriteModuleUI, commandModuleWindow.fourthPanel.deathlistFavorite, commandModuleName, onDeathlistButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.fourthPanel.onlineButton, favoriteModuleUI, commandModuleWindow.fourthPanel.onlineFavorite, commandModuleName, onOnlineButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.fourthPanel.serverinfoButton, favoriteModuleUI, commandModuleWindow.fourthPanel.serverinfoFavorite, commandModuleName, onServerInfoButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.fourthPanel.timeButton, favoriteModuleUI, commandModuleWindow.fourthPanel.timeFavorite, commandModuleName, onTimeButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.fourthPanel.serveruptimeButton, favoriteModuleUI, commandModuleWindow.fourthPanel.serveruptimeFavorite, commandModuleName, onServerUptimeButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.fourthPanel.eventButton, favoriteModuleUI, commandModuleWindow.fourthPanel.eventFavorite, commandModuleName, onEventButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.fourthPanel.triviaButton, favoriteModuleUI, commandModuleWindow.fourthPanel.triviaFavorite, commandModuleName, onTriviaButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.fourthPanel.lazydistanceButton, favoriteModuleUI, commandModuleWindow.fourthPanel.lazydistanceFavorite, commandModuleName, onLazyDistanceButtonClick)
+
+-- Sixth Panel Section for functions and button connectors
+function onFreeGlobalBonusExpButtonClick()
+    say("!live off")
+end
+
+function onFreeGlobalBonusLootButtonClick()
+    say("!away on")
+end
+
+function onFreeGlobalBonusChancesButtonClick()
+    say("!away off")
+end
+
+function onGlobalBonusButtonClick()
+    say("!live on")
+end
+
+-- Original on click functions
+commandModuleWindow.fifthPanel.freeglobalbonusexpButton.onClick = onFreeGlobalBonusExpButtonClick
+commandModuleWindow.fifthPanel.freeglobalbonuslootButton.onClick = onFreeGlobalBonusLootButtonClick
+commandModuleWindow.fifthPanel.freeglobalbonuschancesButton.onClick = onFreeGlobalBonusChancesButtonClick
+commandModuleWindow.fifthPanel.globalbonusButton.onClick = onGlobalBonusButtonClick
+
+-- Favorites on click functions
+createButtonAndSetupEvents(commandModuleWindow.fifthPanel.freeglobalbonusexpButton, favoriteModuleUI, commandModuleWindow.fifthPanel.freeglobalbonusexpFavorite, commandModuleName, onFreeGlobalBonusExpButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.fifthPanel.freeglobalbonuslootButton, favoriteModuleUI, commandModuleWindow.fifthPanel.freeglobalbonuslootFavorite, commandModuleName, onFreeGlobalBonusLootButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.fifthPanel.freeglobalbonuschancesButton, favoriteModuleUI, commandModuleWindow.fifthPanel.freeglobalbonuschancesFavorite, commandModuleName, onFreeGlobalBonusChancesButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.fifthPanel.globalbonusButton, favoriteModuleUI, commandModuleWindow.fifthPanel.globalbonusFavorite, commandModuleName, onGlobalBonusButtonClick)

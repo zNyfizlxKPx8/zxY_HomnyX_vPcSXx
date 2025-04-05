@@ -1,0 +1,848 @@
+-- xOxMacrosxOx De xMSx, Protege tus xmacros si el name de el player no esta en la lista no podra usar los xscripts.
+
+local allowedNames = {
+  "Rosalia",  -- Juanchis
+  "Rush",     -- Juanchis
+  "Rushino",   -- Juanchis
+  "Rushinito",  -- Juanchis
+  "Bibidi babidi buu",   -- Juanchis
+  "Mexcaly",
+  "namee",
+  "name8",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+  "name",
+}
+
+if not table.find(allowedNames, name(), true) then
+  -- Mostrar un cuadro de información en lugar de una ventana de texto
+  modules.corelib.displayInfoBox(tr("Error"), name() .. ", Tu no tienes permitido usar estos scripts.", "Scripts Underbot")
+  return
+end
+
+modules.game_textmessage.displayGameMessage("Scripts Protegidos Cargados.")
+
+setDefaultTab("War")
+local label = UI.Label("W A R")
+label:setColor("#a73ec1") -- Color base
+label:setFont("verdana-11px-rounded")
+
+local glowPosition = 1
+local glowDirection = 1
+
+macro(50, function()
+    local text = "W A R"
+    local numChars = #text
+    local glowRange = math.max(1, math.floor(numChars / 10)) 
+    local coloredText = {}
+
+    for i = 1, numChars do
+        local char = text:sub(i, i)
+        local color = "#a73ec1" -- Color base
+        if math.abs(i - glowPosition) <= glowRange then
+            color = "#dfbae9" -- Color de brillo
+        end
+        table.insert(coloredText, char)
+        table.insert(coloredText, color)
+    end
+
+    glowPosition = glowPosition + glowDirection
+    if glowPosition > numChars then
+        glowPosition = numChars - 1
+        glowDirection = -1
+    elseif glowPosition < 1 then
+        glowPosition = 2
+        glowDirection = 1
+    end
+
+    label:setColoredText(coloredText)
+end)
+UI.Separator()
+-- Coloca Linea Texto Colores
+local qw = UI.Label()
+macro(500, function()
+qw:setText("Combo  Leader")
+qw:setColor("pink")
+qw:setFont("verdana-11px-rounded")
+schedule(600, function()
+  qw:setColor("red")
+end)
+schedule(800, function()
+  qw:setColor("yellow")
+end)
+schedule(1200, function()
+  qw:setColor("orange")
+end)
+schedule(1400, function()
+  qw:setColor("#00FFFF")
+end)
+end)
+
+-- Combo Leader
+local comboOptions = {
+  leader = storage.gpSpellComboLeader or "Lider del Combo",
+  trigger = storage.gpSpellComboTrigger or "palabra a ver",
+  spell = storage.gpSpellComboSpell or "spell a decir",
+}
+
+addLabel("leaderLabel", "Player Lider: ", comboTab)
+addTextEdit("leaderValue", comboOptions.leader, function(widget, text)
+  comboOptions.leader = text
+  storage.gpSpellComboLeader = text
+end, comboTab)
+
+addLabel("triggerLabel", "Palabra Clave: ", comboTab)
+addTextEdit("triggerValue", comboOptions.trigger, function(widget, text)
+  comboOptions.trigger = text
+  storage.gpSpellComboTrigger = text
+end, comboTab)
+
+addLabel("spellLabel", "Spell Combo:", comboTab)
+addTextEdit("spellValue", comboOptions.spell, function(widget, text)
+  comboOptions.spell = text
+  storage.gpSpellComboSpell = text
+end, comboTab)
+
+onTalk(function(name, level, mode, text, channelId, pos)
+  if not comboOptions.trigger then
+    return
+  end
+
+  if name and name:lower() == comboOptions.leader:lower() then
+    if text == comboOptions.trigger then
+      say(comboOptions.spell)
+    end
+  end
+end)
+
+Panels.AttackItem()
+Panels.AttackLeaderTarget()
+-- Combo SD
+if not storage.ComboUni then
+    storage.ComboUni = {}
+end
+
+local settings = storage.ComboUni
+
+settings.SDId = 3155
+settings.SDEffectID = 32
+
+local attackTarget = true
+local toAttack = nil
+
+local comboSD = macro(200, "Combo SD", function() end)
+
+local PvpAttackLeader = {}
+PvpAttackLeader.Macro = macro(50, "Lider De Target SD", function()
+    if toAttack and settings.LeaderName and toAttack ~= g_game.getAttackingCreature() then
+        g_game.attack(toAttack)
+        toAttack = nil
+    end
+end)
+
+PvpAttackLeader.editAttackLeader = UI.TextEdit(settings.LeaderName or "player name", function(widget, newText)
+    settings.LeaderName = newText
+end)
+
+PvpAttackLeader.setLeader = (function(leader)
+    settings.LeaderName = leader
+    PvpAttackLeader.editAttackLeader:setText(leader)
+end)
+
+PvpAttackLeader.setEnabled = (function(enabled)
+    if enabled then
+        PvpAttackLeader.Macro:setOn()
+    else
+        PvpAttackLeader.Macro:setOff()
+    end
+end)
+
+onMissle(function(missle)
+    if not settings.LeaderName or settings.LeaderName:len() == 0 then return end
+    
+    local src = missle:getSource()
+    if src.z ~= posz() then return end
+
+    local from = g_map.getTile(src)
+    local to = g_map.getTile(missle:getDestination())
+    if not from or not to then return end
+
+    local fromCreatures = from:getCreatures()
+    local toCreatures = to:getCreatures()
+    if #fromCreatures ~= 1 or #toCreatures ~= 1 then return end
+
+    local c1 = fromCreatures[1]
+    local t1 = toCreatures[1]
+
+    if c1:getName():lower() == settings.LeaderName:lower() and missle:getId() == settings.SDEffectID then
+        toAttack = t1
+        if comboSD.isOn() then
+            local SDRune = findItem(settings.SDId)
+            if SDRune then
+                return g_game.useWith(SDRune, t1)
+            end
+        end
+    end
+end)
+-- Rings Custom
+local s  = {}
+
+g_ui.loadUIFromString([[
+PvPScriptsScrollBar < Panel
+  height: 28
+  margin-top: 3
+
+  UIWidget
+    id: text
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: parent.top
+    text-align: center
+    
+  HorizontalScrollBar
+    id: scroll
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: prev.bottom
+    margin-top: 3
+    minimum: 0
+    maximum: 10
+    step: 1
+
+PvPScriptsItem < Panel
+  height: 40
+  margin-top: 10  
+  UIWidget
+    id: text
+    anchors.left: parent.left
+    anchors.verticalCenter: next.verticalCenter
+
+  BotItem
+    id: item
+    anchors.top: parent.top
+    anchors.right: parent.right
+    
+]])
+
+local addScrollBar = function(id, title, min, max, defaultValue, dest, tooltip)
+    local widget = UI.createWidget("PvPScriptsScrollBar", dest)
+    widget.text:setTooltip(tooltip)
+    widget.scroll.onValueChange = function(scroll, value)
+      widget.text:setText(title..value)
+      if value == 0 then
+        value = 1
+      end
+      storage[id] = value
+    end
+    widget.scroll:setRange(min, max)
+    widget.scroll:setTooltip(tooltip)
+    widget.scroll:setValue(storage[id] or defaultValue)
+    widget.scroll.onValueChange(widget.scroll, widget.scroll:getValue())
+end
+
+local addItem = function(id, title, defaultItem, dest, tooltip)
+    local widget = UI.createWidget('PvPScriptsItem', dest)
+    widget:setId(id)
+    widget.text:setText(title)
+    widget.text:setTooltip(tooltip)
+    widget.item:setTooltip(tooltip)
+    widget.item:setItemId(storage[id] or defaultItem)
+    widget.item.onItemChange = function(widget)
+      storage[id] = widget:getItemId()
+    end
+    storage[id] = storage[id] or defaultItem
+    return widget
+end
+
+addSeparator()
+-- Coloca Linea Texto Colores
+local qw = UI.Label()
+macro(500, function()
+qw:setText("Rings  Custom")
+qw:setColor("pink")
+qw:setFont("verdana-11px-rounded")
+schedule(600, function()
+  qw:setColor("red")
+end)
+schedule(800, function()
+  qw:setColor("yellow")
+end)
+schedule(1200, function()
+  qw:setColor("orange")
+end)
+schedule(1400, function()
+  qw:setColor("#00FFFF")
+end)
+end)
+addSeparator()
+addLabel()
+
+addLabel("", "E-Ring"):setColor("#5DF2BD")
+addScrollBar("ERingHP", "HP < ", 0, 100, 90, nil, "")
+addScrollBar("ERingMP", "MP > ", 0, 100, 80, nil, "")
+addItem("ERing", "normal id", storage.ERing or 3051, nil, "")
+addItem("ERingEquipped", "equipped Id", storage.ERingEquipped or 3088, nil, "")
+
+addLabel("", "Normal Ring"):setColor("yellow")
+addScrollBar("NormalHP", "HP > ", 0, 100, 90, nil, "")
+addScrollBar("NormalMP", "MP < ", 0, 100, 80, nil, "")
+addItem("NormalRing", "normal id", storage.NormalRing or 3004, nil, "")
+addItem("NormalRingEquipped", "equipped id", storage.NormalRingEquipped or 3004, nil, "")
+
+s.equipItem = function(normalId, activeId, slot)
+    local item = getInventoryItem(slot)
+    if item and item:getId() == activeId then
+        return false
+    end
+  
+    if g_game.getClientVersion() >= 870 then
+      g_game.equipItemId(normalId)
+      return true
+    end
+  
+    local itemToEquip = findItem(normalId)
+    if itemToEquip then
+        moveToSlot(itemToEquip, slot, itemToEquip:getCount())
+        return true
+    end
+end
+
+function crazyHPPercent()
+  return (player:getHealth() / 100) * 10
+end
+
+s.m_main = macro(50, "E-Ring", function() 
+  local hp = hppercent()
+  local mp = manapercent()
+   
+
+  local equipEnergy = hp < storage.ERingHP and mp > storage.ERingMP
+  local equipNormal = hp > storage.NormalHP and mp <= storage.NormalMP
+
+  if equipEnergy then
+      s.equipItem(storage.ERing, storage.ERingEquipped, SlotFinger)
+  elseif equipNormal then
+      s.equipItem(storage.NormalRing, storage.NormalRingEquipped, SlotFinger)
+  end
+end)
+
+--- joyeria
+function jewelleryEquip()
+  panelName = "jewelleryEquipper"
+ 
+  local ui = setupUI([[
+Panel
+  height: 130
+  margin-top: 2
+
+  BotItem
+    id: ringId
+    anchors.left: parent.left
+    anchors.top: parent.top
+
+  SmallBotSwitch
+    id: ringSwitch
+    anchors.left: ringId.right
+    anchors.right: parent.right
+    anchors.top: parent.top
+    text-align: center
+    text: Equip Ring
+    margin-left: 3
+    margin-right: 45
+
+  SmallBotSwitch
+    id: valueRing
+    anchors.left: ringSwitch.right
+    anchors.right: parent.right
+    anchors.top: parent.top
+    text-align: center
+    text: Mana
+    margin-left: 3
+    margin-right: 0  
+
+  BotLabel
+    id: ringTitle
+    anchors.left: ringId.right
+    anchors.right: parent.right
+    anchors.top: ringId.verticalCenter
+    text-align: center
+
+  HorizontalScrollBar
+    id: ringScroll1
+    anchors.left: parent.left
+    anchors.right: parent.horizontalCenter
+    anchors.top: ringId.bottom
+    margin-right: 2
+    margin-top: 2
+    minimum: 0
+    maximum: 100
+    step: 1
+    
+  HorizontalScrollBar
+    id: ringScroll2
+    anchors.left: parent.horizontalCenter
+    anchors.right: parent.right
+    anchors.top: prev.top
+    margin-left: 2
+    minimum: 0
+    maximum: 100
+    step: 1
+    
+  BotItem
+    id: ammyId
+    anchors.left: parent.left
+    anchors.top: ringScroll1.bottom
+    margin-top: 5
+
+  SmallBotSwitch
+    id: ammySwitch
+    anchors.left: ammyId.right
+    anchors.right: parent.right
+    anchors.top: ringScroll2.bottom
+    text-align: center
+    text: Equip Amulet
+    margin-top: 5
+    margin-left: 3
+    margin-right: 45
+
+  SmallBotSwitch
+    id: valueAmmy
+    anchors.left: ammySwitch.right
+    anchors.right: parent.right
+    anchors.top: ringScroll2.bottom
+    text-align: center
+    text: Mana
+    margin-top: 5
+    margin-left: 3
+
+  BotLabel
+    id: ammyTitle
+    anchors.left: ammyId.right
+    anchors.right: parent.right
+    anchors.top: ammyId.verticalCenter
+    text-align: center
+
+  HorizontalScrollBar
+    id: ammyScroll1
+    anchors.left: parent.left
+    anchors.right: parent.horizontalCenter
+    anchors.top: ammyId.bottom
+    margin-right: 2
+    margin-top: 2
+    minimum: 0
+    maximum: 100
+    step: 1
+    
+  HorizontalScrollBar
+    id: ammyScroll2
+    anchors.left: parent.horizontalCenter
+    anchors.right: parent.right
+    anchors.top: prev.top
+    margin-left: 2
+    minimum: 0
+    maximum: 100
+    step: 1
+
+  Button
+    id: resetDefault
+    anchors.top: ammyScroll2.bottom
+    anchors.left: parent.left
+    anchors.right: parent.horizontalCenter
+    margin-top: 8
+    margin-left: 2
+    text: Reset Default
+
+
+  ]], parent)
+  ui:setId(panelName)
+  if not storage[panelName] or not storage[panelName].ringId or not storage[panelName].ammyId then
+    storage[panelName] = {
+      ringSwitch = true,
+      ammySwitch = true,
+      ringId = 3048,
+      ammyId = 3081,
+      ringMin = 30,
+      ringMax = 80,
+      ammyMin = 30,
+      ammyMax = 80,
+      valueAmmy = false,
+      valueRing = false,
+      ringValue = "HP",
+      ammyValue = "HP"
+    }
+  end
+
+
+  ui.ringSwitch:setOn(storage[panelName].ringEnabled)
+  ui.ringSwitch.onClick = function(widget)
+    storage[panelName].ringEnabled = not storage[panelName].ringEnabled
+    widget:setOn(storage[panelName].ringEnabled)
+  end
+  ui.ammySwitch:setOn(storage[panelName].ammyEnabled)
+  ui.ammySwitch.onClick = function(widget)
+    storage[panelName].ammyEnabled = not storage[panelName].ammyEnabled
+    widget:setOn(storage[panelName].ammyEnabled)
+  end
+
+  local updateRingText = function()
+    ui.ringTitle:setText("" .. storage[panelName].ringMin .. "% <= " .. storage[panelName].ringValue .. " >= " .. storage[panelName].ringMax .. "%")  
+  end
+  local updateAmmyText = function()
+    ui.ammyTitle:setText("" .. storage[panelName].ammyMin .. "% <= " .. storage[panelName].ammyValue .. " >= " .. storage[panelName].ammyMax .. "%")  
+  end
+
+  ui.valueRing:setOn(storage[panelName].valueRing)
+  ui.valueRing.onClick = function(widget)
+    storage[panelName].valueRing = not storage[panelName].valueRing
+    widget:setOn(storage[panelName].valueRing)
+    if storage[panelName].valueRing then
+      storage[panelName].ringValue = "MP"
+    else
+      storage[panelName].ringValue = "HP"
+    end
+    updateRingText()
+  end
+  ui.valueAmmy:setOn(storage[panelName].valueAmmy)
+  ui.valueAmmy.onClick = function(widget)
+    storage[panelName].valueAmmy = not storage[panelName].valueAmmy
+    widget:setOn(storage[panelName].valueAmmy)
+    if storage[panelName].valueAmmy then
+      storage[panelName].ammyValue = "MP"
+    else
+      storage[panelName].ammyValue = "HP"
+    end
+    updateAmmyText()
+  end
+ 
+  ui.ringScroll1.onValueChange = function(scroll, value)
+    storage[panelName].ringMin = value
+    updateRingText()
+  end
+  ui.ringScroll2.onValueChange = function(scroll, value)
+    storage[panelName].ringMax = value
+    updateRingText()
+  end
+  ui.ammyScroll1.onValueChange = function(scroll, value)
+    storage[panelName].ammyMin = value
+    updateAmmyText()
+  end
+  ui.ammyScroll2.onValueChange = function(scroll, value)
+    storage[panelName].ammyMax = value
+    updateAmmyText()
+  end  
+  ui.ringId.onItemChange = function(widget)
+    storage[panelName].ringId = widget:getItemId()
+  end
+  ui.ammyId.onItemChange = function(widget)
+    storage[panelName].ammyId = widget:getItemId()
+  end
+
+  ui.resetDefault.onClick = function(widget)
+    defaultRingFind()
+    defaultAmmyFind()
+  end
+
+
+  ui.ringScroll1:setValue(storage[panelName].ringMin)
+  ui.ringScroll2:setValue(storage[panelName].ringMax)
+  ui.ammyScroll1:setValue(storage[panelName].ammyMin)
+  ui.ammyScroll2:setValue(storage[panelName].ammyMax)  
+  ui.ringId:setItemId(storage[panelName].ringId)
+  ui.ammyId:setItemId(storage[panelName].ammyId)
+
+  local defaultRing
+  local defaultAmmy
+  local ringToEquip
+  local ammyToEquip
+
+
+  -- basic ring check
+  function defaultRingFind()
+    if storage[panelName].ringEnabled then
+      if getFinger() and (getFinger():getId() ~= storage[panelName].ringId and getFinger():getId() ~= storage[panelName].ringId) then
+        defaultRing = getFinger():getId()
+      else
+        defaultRing = false
+      end
+    end
+  end
+  defaultRingFind()
+
+  -- basic amulet check
+  function defaultAmmyFind()
+    if storage[panelName].ammyEnabled then
+      if getNeck() and (getNeck():getId() ~= storage[panelName].ammyId and getNeck():getId() ~= storage[panelName].ammyId) then
+        defaultAmmy = getNeck():getId()
+      else
+        defaultAmmy = false
+      end
+    end
+  end
+  defaultAmmyFind()
+
+  macro(20, function()
+    ammyToEquip = findItem(storage[panelName].ammyId)
+    ringToEquip = findItem(storage[panelName].ringId)
+
+    -- basic conditions to met 
+    if not storage[panelName].ringEnabled and not storage[panelName].ammyEnabled then return end
+    if not storage[panelName].ringEnabled and storage[panelName].ammyEnabled and not ammyToEquip and (not getNeck() or (getNeck():getId() ~= storage[panelName].ammyId and getNeck():getId() ~= storage[panelName].ammyId)) then return end
+    if storage[panelName].ringEnabled and not storage[panelName].ammyEnabled and not ringToEquip and (not getFinger() or (getFinger():getId() ~= storage[panelName].ringId and getFinger():getId() ~= storage[panelName].ringId)) then return end
+
+    -- ring unequip conditions
+    if storage[panelName].ringEnabled and getFinger() and
+      getFinger():getId() == storage[panelName].ringId and
+      ((not storage[panelName].valueRing and
+        (hppercent() > storage[panelName].ringMax or
+        hppercent() < storage[panelName].ringMin)) or
+      (storage[panelName].valueRing and
+        (manapercent() > storage[panelName].ringMax or
+        manapercent() < storage[panelName].ringMin)))
+    then
+      if defaultRing then
+        moveToSlot(findItem(defaultRing), SlotFinger, 1)
+      else
+        for _,container in pairs(getContainers()) do
+          g_game.move(getFinger(), container:getSlotPosition(container:getItemsCount()))
+          return
+        end
+      end
+      delay(200)
+    end
+
+    -- amulet unequip conditions
+    if storage[panelName].ammyEnabled and
+      getNeck() and getNeck():getId() == storage[panelName].ammyId and
+      ((not storage[panelName].valueAmmy and
+        (hppercent() > storage[panelName].ammyMax or
+        hppercent() < storage[panelName].ammyMin)) or
+      (storage[panelName].valueAmmy and
+        (manapercent() > storage[panelName].ammyMax or
+        manapercent() < storage[panelName].ammyMin)))
+    then
+      if defaultAmmy then
+        moveToSlot(findItem(defaultAmmy), SlotNeck, 1)
+      else
+        for _,container in pairs(getContainers()) do
+          g_game.move(getNeck(), container:getSlotPosition(container:getItemsCount()))
+          return
+        end
+      end
+      delay(200)
+    end
+
+    -- ring equip conditions
+    if storage[panelName].ringEnabled and
+      (not getFinger() or getFinger():getId() ~= storage[panelName].ringId) and
+      not isInPz() and
+      ((not storage[panelName].valueRing and
+        hppercent() <= storage[panelName].ringMax and
+        hppercent() >= storage[panelName].ringMin) or
+      (storage[panelName].valueRing and
+        manapercent() <= storage[panelName].ringMax and
+        manapercent() >= storage[panelName].ringMin))
+    then
+      moveToSlot(ringToEquip, SlotFinger, 1)
+      delay(200)
+
+    end
+    -- amulet equip conditions
+    if storage[panelName].ammyEnabled and
+      (not getNeck() or getNeck():getId() ~= storage[panelName].ammyId) and
+      not isInPz() and
+      ((not storage[panelName].valueAmmy and
+        hppercent() <= storage[panelName].ammyMax and
+        hppercent() >= storage[panelName].ammyMin) or
+      (storage[panelName].valueAmmy and
+        manapercent() <= storage[panelName].ammyMax and
+        manapercent() >= storage[panelName].ammyMin))
+    then
+        moveToSlot(ammyToEquip, SlotNeck, 1)
+        delay(200)
+
+    end
+  end)
+  -- end of function
+end
+addSeparator()
+local labeljoyas = UI.Label("Equipar Joyeria")
+labeljoyas:setColor("#00FFFF")
+jewelleryEquip()
+addSeparator()
+
+--- Equip
+local scripts = 2 -- if you want more auto equip panels you can change 2 to higher value
+
+local labelaequip = UI.Label("Auto Equip")
+labelaequip:setColor("#00FFFF")
+if type(storage.autoEquip) ~= "table" then
+  storage.autoEquip = {}
+end
+for i=1,scripts do
+  if not storage.autoEquip[i] then
+    storage.autoEquip[i] = {on=false, title="Auto Equip", item1=i == 1 and 3052 or 0, item2=i == 1 and 3089 or 0, slot=i == 1 and 9 or 0}
+  end
+  UI.TwoItemsAndSlotPanel(storage.autoEquip[i], function(widget, newParams)
+    storage.autoEquip[i] = newParams
+  end)
+end
+macro(250, function()
+  local containers = g_game.getContainers()
+  for index, autoEquip in ipairs(storage.autoEquip) do
+    if autoEquip.on then
+      local slotItem = getSlot(autoEquip.slot)
+      if not slotItem or (slotItem:getId() ~= autoEquip.item1 and slotItem:getId() ~= autoEquip.item2) then
+        for _, container in pairs(containers) do
+          for __, item in ipairs(container:getItems()) do
+            if item:getId() == autoEquip.item1 or item:getId() == autoEquip.item2 then
+              g_game.move(item, {x=65535, y=autoEquip.slot, z=0}, item:getCount())
+              delay(1000) -- don't call it too often      
+              return
+            end
+          end
+        end
+      end
+    end
+  end
+end)
+
+-- Crear la pestana del equipador
+equipTab = addTab("War")
+
+addSeparator("separator", equipTab)
+
+local defEquipperLabel = addLabel("defequipper", "DEF EQUIPPER", equipTab)
+defEquipperLabel:setColor("#BA55D3") -- Aplica el color verde
+
+addSeparator("separator", equipTab)
+
+local def_ui = g_ui.createWidget("ItemsRow", equipTab)
+def_ui:setId("defitems")
+
+-- Almacenar items en storage para persistencia
+if not storage.def_helm then storage.def_helm = 11689 end
+if not storage.def_ring then storage.def_ring = 406 end
+if not storage.def_legs then storage.def_legs = 8863 end
+if not storage.def_shield then storage.def_shield = 3437 end
+if not storage.def_armor then storage.def_armor = 8057 end
+
+-- Asignar los items al panel
+def_ui.item1:setItemId(storage.def_helm)
+def_ui.item2:setItemId(storage.def_ring)
+def_ui.item3:setItemId(storage.def_legs)
+def_ui.item4:setItemId(storage.def_shield)
+def_ui.item5:setItemId(storage.def_armor)
+
+-- Funcion para equipar un item sin reintentos
+local function equipItem(itemId, slot)
+    local item = findItem(itemId)
+    if item then
+        moveToSlot(item, slot, 1)
+    end
+end
+
+-- Macro para equipar set defensivo
+local def_macro = macro(10, "Equip DEF EQ", function(m)
+    storage.def_helm = def_ui.item1:getItemId()
+    storage.def_ring = def_ui.item2:getItemId()
+    storage.def_legs = def_ui.item3:getItemId()
+    storage.def_shield = def_ui.item4:getItemId()
+    storage.def_armor = def_ui.item5:getItemId()
+
+    equipItem(storage.def_helm, 1)
+    equipItem(storage.def_ring, 9)
+    equipItem(storage.def_legs, 7)
+    equipItem(storage.def_shield, 5)
+    equipItem(storage.def_armor, 4)
+
+    schedule(3500, function()
+        m:setOff()
+    end)
+end, equipTab)
+
+addSeparator("separator", equipTab)
+
+local dmgEquipperLabel = 
+addLabel("dmgequipper", "DMG EQUIPPER", equipTab)
+dmgEquipperLabel:setColor("#00FFFF") -- Aplica el color verde
+addSeparator("separator", equipTab)
+
+local dmg_ui = g_ui.createWidget("ItemsRow", equipTab)
+dmg_ui:setId("dmgitems")
+
+if not storage.dmg_helm then storage.dmg_helm = 10385 end
+if not storage.dmg_ring then storage.dmg_ring = 3007 end
+if not storage.dmg_legs then storage.dmg_legs = 3398 end
+if not storage.dmg_shield then storage.dmg_shield = 3438 end
+if not storage.dmg_armor then storage.dmg_armor = 11686 end
+
+dmg_ui.item1:setItemId(storage.dmg_helm)
+dmg_ui.item2:setItemId(storage.dmg_ring)
+dmg_ui.item3:setItemId(storage.dmg_legs)
+dmg_ui.item4:setItemId(storage.dmg_shield)
+dmg_ui.item5:setItemId(storage.dmg_armor)
+
+local dmg_macro = macro(10, "Equip DMG EQ", function(m)
+    storage.dmg_helm = dmg_ui.item1:getItemId()
+    storage.dmg_ring = dmg_ui.item2:getItemId()
+    storage.dmg_legs = dmg_ui.item3:getItemId()
+    storage.dmg_shield = dmg_ui.item4:getItemId()
+    storage.dmg_armor = dmg_ui.item5:getItemId()
+
+    equipItem(storage.dmg_helm, 1)
+    equipItem(storage.dmg_ring, 9)
+    equipItem(storage.dmg_legs, 7)
+    equipItem(storage.dmg_shield, 5)
+    equipItem(storage.dmg_armor, 4)
+
+    schedule(3500, function()
+        m:setOff()
+    end)
+end, equipTab)
+
+addSeparator("separator", equipTab)
+
+local speedEquipperLabel = 
+addLabel("speedequipper", "SPEED EQUIPPER", equipTab)
+speedEquipperLabel:setColor("#00FF00") -- Aplica el color verde
+addSeparator("separator", equipTab)
+
+local speed_ui = g_ui.createWidget("ItemsRow", equipTab)
+speed_ui:setId("speeditems")
+
+if not storage.speed_amulet then storage.speed_amulet = 9803 end
+if not storage.speed_boots then storage.speed_boots = 3555 end
+if not storage.speed_ring then storage.speed_ring = 406 end
+if not storage.speed_ammo then storage.speed_ammo = 11372 end
+if not storage.speed_legs then storage.speed_legs = 3398 end
+
+speed_ui.item1:setItemId(storage.speed_amulet)
+speed_ui.item2:setItemId(storage.speed_boots)
+speed_ui.item3:setItemId(storage.speed_ring)
+speed_ui.item4:setItemId(storage.speed_ammo)
+speed_ui.item5:setItemId(storage.speed_legs)
+
+local speed_macro = macro(10, "Equip Speed EQ", function(m)
+    storage.speed_amulet = speed_ui.item1:getItemId()
+    storage.speed_boots = speed_ui.item2:getItemId()
+    storage.speed_ring = speed_ui.item3:getItemId()
+    storage.speed_ammo = speed_ui.item4:getItemId()
+    storage.speed_legs = speed_ui.item5:getItemId()
+
+    equipItem(storage.speed_amulet, 2)
+    equipItem(storage.speed_boots, 8)
+    equipItem(storage.speed_ring, 9)
+    equipItem(storage.speed_legs, 7)
+    equipItem(storage.speed_ammo, 10)
+
+    schedule(3500, function()
+        m:setOff()
+    end)
+end, equipTab)
