@@ -1,14 +1,117 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 -- xOxMacrosxOx De xMSx, Protege tus xmacros si el name de el player no esta en la lista no podra usar los xscripts.
 
 local allowedNames = {
-  "Rosalia",  -- Juanchis
-  "Rush",     -- Juanchis
-  "Rushino",   -- Juanchis
-  "Rushinito",  -- Juanchis
-  "Bibidi babidi buu",   -- Juanchis
-  "Mexcaly",
-  "namee",
-  "name8",
+  "Undersky",
+  "name",
   "name",
   "name",
   "name",
