@@ -134,19 +134,18 @@ end
 modules.game_textmessage.displayGameMessage("Scripts Protegidos Cargados.")
 
 setDefaultTab("Cave")
--- Run
-local labelrun = UI.Label("Agrega Hasta 5 Labels Run1 a Run4 & Pz")
-labelrun:setColor("#00FFFF") -- celeste
- 
+-- Script By Undersky   Run Pk Deluxe
+
+UI.Label("Agrega Hasta 4 Labels Run1 a Run4 & Pz")
+
 local etiquetas = {
-    {nombre = "Run1", activo = false, ultimoCambio = 0},
-    {nombre = "Run2", activo = false, ultimoCambio = 0},
-    {nombre = "Run3", activo = false, ultimoCambio = 0},
-    {nombre = "Run4", activo = false, ultimoCambio = 0},
-    {nombre = "Pz", activo = false, ultimoCambio = 0}
+    {nombre = "Run1", activo = false},
+    {nombre = "Run2", activo = false},
+    {nombre = "Run3", activo = false},
+    {nombre = "Run4", activo = false},
+    {nombre = "Pz", activo = false}
 }
 
-local tiempoPorEtiqueta = 60000 -- 1 minuto
 local indiceActual = 1
 
 local function playersinScreenWithSkull()
@@ -158,20 +157,24 @@ local function playersinScreenWithSkull()
     return false
 end
 
-macro(1000, "Run/Pk", function()
+macro(1000, "Ir a Run/Pz", function()
     if playersinScreenWithSkull() then
         local etiquetaActual = etiquetas[indiceActual]
         if not etiquetaActual.activo then
+            modules.game_textmessage.displayGameMessage("Alerta PK! Moviendome A Zona Segura.") -- <<< Mensaje en consola interna
             CaveBot.gotoLabel(etiquetaActual.nombre)
             etiquetaActual.activo = true
-            etiquetaActual.ultimoCambio = now
-        elseif etiquetaActual.activo and now - etiquetaActual.ultimoCambio >= tiempoPorEtiqueta then
-            etiquetaActual.activo = false
             indiceActual = indiceActual + 1
             if indiceActual > #etiquetas then
                 indiceActual = 1
             end
         end
+    else
+        -- Si ya no hay player con skull, reseteamos todo
+        for _, etiqueta in ipairs(etiquetas) do
+            etiqueta.activo = false
+        end
+        indiceActual = 1
     end
 end)
 
