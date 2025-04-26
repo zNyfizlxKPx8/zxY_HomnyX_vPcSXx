@@ -1476,6 +1476,114 @@ CommandListsWindow < MainWindow
       image-source: /images/ui/checkbox
       change-cursor-image: true
       cursor: pointer  
+      
+    Button
+      id: tradeButton
+      !tooltip: tr('Habla con Npc y te Muestra la tienda.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: "Npc Shop"
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: tradeFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer  
+      
+    Button
+      id: venButton
+      !tooltip: tr('Llama al FolloMc.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: "Ven"
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: venFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer  
+      
+    Button
+      id: smartButton
+      !tooltip: tr('Activa el Follow Modo inteligente del FollowMc.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: "Smart"
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: smartFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer 
+      
+    Button
+      id: stopButton
+      !tooltip: tr('Detiene al FolloMc.')
+      anchors.left: parent.left
+      anchors.top: prev.bottom
+      margin-top: 2
+      margin-left: -1
+      text: "Stop"
+      font: cipsoftFont
+
+    CheckBox
+      size: 20 20
+      id: stopFavorite
+      !tooltip: tr('Add to Favorites')
+      anchors.left: prev.right
+      anchors.top: prev.top
+      margin-left: 4
+      margin-top: 3
+      text-align: left
+      text-offset: 18 -1
+      color: #dfdfdf
+      image-color: #dfdfdfff
+      image-rect: 0 0 18 18
+      image-source: /images/ui/checkbox
+      change-cursor-image: true
+      cursor: pointer  
 
   Button
     id: closeButton
@@ -1701,6 +1809,10 @@ local buttonCheckboxPairs = {
     {originalButton = commandModuleWindow.fifthPanel.freeglobalbonuslootButton, checkbox = commandModuleWindow.fifthPanel.freeglobalbonuslootFavorite, moduleName = commandModuleName},
     {originalButton = commandModuleWindow.fifthPanel.freeglobalbonuschancesButton, checkbox = commandModuleWindow.fifthPanel.freeglobalbonuschancesFavorite, moduleName = commandModuleName},
     {originalButton = commandModuleWindow.fifthPanel.freeglobalbonusexpButton, checkbox = commandModuleWindow.fifthPanel.freeglobalbonusexpFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.fifthPanel.tradeButton, checkbox = commandModuleWindow.fifthPanel.tradeFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.fifthPanel.venButton, checkbox = commandModuleWindow.fifthPanel.venFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.fifthPanel.smartButton, checkbox = commandModuleWindow.fifthPanel.smartFavorite, moduleName = commandModuleName},
+    {originalButton = commandModuleWindow.fifthPanel.stopButton, checkbox = commandModuleWindow.fifthPanel.stopFavorite, moduleName = commandModuleName},
     {originalButton = commandModuleWindow.fifthPanel.globalbonusButton, checkbox = commandModuleWindow.fifthPanel.globalbonusFavorite, moduleName = commandModuleName},
 }
 
@@ -1975,14 +2087,40 @@ function onGlobalBonusButtonClick()
     say("!live on")
 end
 
+function onVenButtonClick()
+    say("Ven")
+end
+
+function onSmartButtonClick()
+    say("Smart")
+end
+
+function onStopButtonClick()
+    say("Stop")
+end
+
+function onTradeButtonClick()
+    NPC.say("hi")
+    schedule(1000, function() NPC.say("trade") end)
+    schedule(2000, function() NPC.say("yes") end)
+end
+
 -- Original on click functions
 commandModuleWindow.fifthPanel.freeglobalbonusexpButton.onClick = onFreeGlobalBonusExpButtonClick
 commandModuleWindow.fifthPanel.freeglobalbonuslootButton.onClick = onFreeGlobalBonusLootButtonClick
 commandModuleWindow.fifthPanel.freeglobalbonuschancesButton.onClick = onFreeGlobalBonusChancesButtonClick
 commandModuleWindow.fifthPanel.globalbonusButton.onClick = onGlobalBonusButtonClick
+commandModuleWindow.fifthPanel.tradeButton.onClick = onTradeButtonClick
+commandModuleWindow.fifthPanel.venButton.onClick = onVenButtonClick
+commandModuleWindow.fifthPanel.smartButton.onClick = onSmartButtonClick
+commandModuleWindow.fifthPanel.stopButton.onClick = onStopButtonClick
 
 -- Favorites on click functions
 createButtonAndSetupEvents(commandModuleWindow.fifthPanel.freeglobalbonusexpButton, favoriteModuleUI, commandModuleWindow.fifthPanel.freeglobalbonusexpFavorite, commandModuleName, onFreeGlobalBonusExpButtonClick)
 createButtonAndSetupEvents(commandModuleWindow.fifthPanel.freeglobalbonuslootButton, favoriteModuleUI, commandModuleWindow.fifthPanel.freeglobalbonuslootFavorite, commandModuleName, onFreeGlobalBonusLootButtonClick)
 createButtonAndSetupEvents(commandModuleWindow.fifthPanel.freeglobalbonuschancesButton, favoriteModuleUI, commandModuleWindow.fifthPanel.freeglobalbonuschancesFavorite, commandModuleName, onFreeGlobalBonusChancesButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.fifthPanel.tradeButton, favoriteModuleUI, commandModuleWindow.fifthPanel.tradeFavorite, commandModuleName, onTradeButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.fifthPanel.venButton, favoriteModuleUI, commandModuleWindow.fifthPanel.venFavorite, commandModuleName, onVenButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.fifthPanel.smartButton, favoriteModuleUI, commandModuleWindow.fifthPanel.smartFavorite, commandModuleName, onSmartButtonClick)
+createButtonAndSetupEvents(commandModuleWindow.fifthPanel.stopButton, favoriteModuleUI, commandModuleWindow.fifthPanel.stopFavorite, commandModuleName, onStopButtonClick)
 createButtonAndSetupEvents(commandModuleWindow.fifthPanel.globalbonusButton, favoriteModuleUI, commandModuleWindow.fifthPanel.globalbonusFavorite, commandModuleName, onGlobalBonusButtonClick)
