@@ -1612,7 +1612,7 @@ macro(50, function()
     titleMagias:setColoredText(coloredText)
 end)
 
--- Follow Deluxe Se puedes usar manual o que el lider follow lo controle x medio de comando "ven" o que cambia entre macros con el modo Follow Inteligente
+-- Follow Deluxe Pro Se puedes usar manual o que el lider follow lo controle x medio de comando "ven" cambia entre macros, "Agresivo y Distancia", y si dices "smart", activa modo Follow inteligente, que este intercambia automaticamente entre ambos,y si dices stop para todos los macros.
 -- Coloca Linea Texto Colores
 local qw = UI.Label()
 macro(500, function()
@@ -1982,17 +1982,34 @@ end)
 local followMode = "distance"
 
 onTalk(function(name, level, mode, text, channelId, pos)
-    if name == storage.followLeader and text:lower() == "ven" then
-        if followMode == "distance" then
-            followMacro:setOff()
-            AdvancedFollow:setOn()
-            followMode = "aggressive"
-            print("Cambiado a Follow Agresivo")
-        else
-            AdvancedFollow:setOff()
-            followMacro:setOn()
+    if name == storage.followLeader then
+        if text:lower() == "ven" then
+            if followMode == "distance" then
+                followMacro:setOff()
+                AdvancedFollow:setOn()
+                followMode = "aggressive"
+                print("Cambiado a Follow Agresivo")
+            else
+                AdvancedFollow:setOff()
+                followMacro:setOn()
+                followMode = "distance"
+                print("Cambiado a Follow Distancia")
+            end
+        elseif text:lower() == "stop" then
+            followLeader = false
+            floorFollowEnabled = false
             followMode = "distance"
-            print("Cambiado a Follow Distancia")
+            followMacro:setOff()
+            AdvancedFollow:setOff()
+            Autofollow:setOff()
+            print("Follow detenido y macros apagados")
+        elseif text:lower() == "smart" then
+            if not Autofollow.isOn() then
+                Autofollow:setOn()  -- Activar el Follow Inteligente
+                followMacro:setOff()  -- Asegurarse de que el Follow Distancia esté apagado
+                AdvancedFollow:setOff()  -- Asegurarse de que el Follow Agresivo esté apagado
+                print("Activado Follow Inteligente")
+            end
         end
     end
 end)
@@ -2002,8 +2019,6 @@ onCreaturePositionChange(function(creature, newPos, oldPos)
         toFollowPos[newPos.z] = newPos
     end
 end)
-
-
 
 followdist = "disttofollow"
 if not storage[followdist] then
