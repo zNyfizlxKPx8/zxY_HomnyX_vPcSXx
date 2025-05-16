@@ -111,7 +111,8 @@
 
 local allowedNames = {
   "Undersky",
-  "name",
+  "Power Abuser",  -- Power Noxious
+  "Amazing Power",  -- Power Noxious
   "name",
   "name",
   "name",
