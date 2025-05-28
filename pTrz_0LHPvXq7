@@ -171,6 +171,121 @@ macro(50, function()
 end)
 UI.Separator()
 
+-- Script By Undersky
+-- Interfaz visual para elegir la pocion
+local ui = setupUI([[
+Panel
+  height: 19
+
+  BotSwitch
+    id: title
+    anchors.top: parent.top
+    anchors.left: parent.left
+    text-align: center
+    width: 130
+    !text: tr('Potear Amigos')
+
+  Button
+    id: edit
+    anchors.top: prev.top
+    anchors.left: prev.right
+    anchors.right: parent.right
+    margin-left: 3
+    height: 17
+    text: Edit
+    color: #00FFFF
+]])
+-- Script By Undersky
+-- Panel de edicion oculto
+local edit = setupUI([[
+Panel
+  height: 60
+
+  Label
+    text: "Pocion a usar:"
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    text-align: center
+    margin-top: 5
+
+  BotContainer
+    id: PotionSlot
+    anchors.top: prev.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    height: 32
+]])
+edit:hide()
+
+-- Configuracion inicial
+if not storage.friendHealer then
+  storage.friendHealer = {
+    enabled = false,
+    potion = {238} -- ID por defecto
+  }
+end
+
+local config = storage.friendHealer
+local showEdit = false
+
+-- Boton para mostrar/ocultar configuracion
+ui.edit.onClick = function()
+  showEdit = not showEdit
+  if showEdit then
+    edit:show()
+  else
+    edit:hide()
+  end
+end
+
+-- Activador del macro
+ui.title:setOn(config.enabled)
+ui.title.onClick = function()
+  config.enabled = not config.enabled
+  ui.title:setOn(config.enabled)
+end
+
+-- Guardado de item seleccionado
+UI.Container(function()
+  config.potion = edit.PotionSlot:getItems()
+end, true, nil, edit.PotionSlot)
+edit.PotionSlot:setItems(config.potion)
+
+-- Macro de poteo usando isFriend()
+macro(500, "", function()
+  if not config.enabled then return end
+  if not config.potion or #config.potion == 0 then
+    return warn("Selecciona una pocion en el panel Edit.")
+  end
+
+  local potionId = config.potion[1].id
+  local friends = getSpectators()
+  local nearestFriend = nil
+  local shortestDistance = math.huge
+
+  for _, creature in ipairs(friends) do
+    if creature:isPlayer() and creature ~= player and isFriend(creature) then
+      if creature:getHealthPercent() < 101 then
+        local distance = getDistanceBetween(player:getPosition(), creature:getPosition())
+        if distance <= 1 and distance < shortestDistance then
+          shortestDistance = distance
+          nearestFriend = creature
+        end
+      end
+    end
+  end
+
+  if nearestFriend then
+    local potion = findItem(potionId)
+    if potion then
+      g_game.useWith(potion, nearestFriend)
+    else
+      warn("No tienes la pocion (ID: " .. potionId .. ") en tu inventario.")
+    end
+  end
+end)
+
 -- HP
 if type(storage.healing1) ~= "table" then
   storage.healing1 = {on=false, title="HP%", text="exura", min=76, max=93}
