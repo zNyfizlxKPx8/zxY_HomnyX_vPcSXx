@@ -193,6 +193,260 @@ for _, scripts in ipairs({storage.ingame_macros, storage.ingame_hotkeys}) do
   end
 end
 
+-- ===============================
+-- SCRIPT CREADO BY UNDERSKY
+-- ===============================
+
+-- Cargar NPCs guardados o usar lista por defecto
+local tradeNpcs = storage.tradeNpcs or {
+  "Rashid", "Yasir", "Grizzly Adams", "Znozel", "Esrik",
+  "Captain Seahorse", "Black Bert", "Willard", "Sandra",
+  "Dario", "Eryn", "Flint", "Isimov", "Lorek", "Sam", "[Magic] Xodet"
+}
+
+-- ===============================
+-- VENTANA PARA AGREGAR NUEVOS NPCs
+-- ===============================
+g_ui.loadUIFromString([[
+AddNpcWindow < MainWindow
+  size: 140 132
+
+  Label
+    id: addNpcTitle
+    text: Agregar NPC
+    font: verdana-11px-rounded
+    color: #00ffff
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+    margin-top: -24 -- esto mueve texto
+
+  TextEdit
+    id: npcNameInput
+    anchors.top: prev.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    height: 25
+    text: ""
+    font: verdana-11px-rounded
+    placeholder: "Nombre del NPC"
+    margin-top: 8
+
+  Button
+    id: addNpcButton
+    text: Agregar
+    font: cipsoftFont
+    height: 23
+    anchors.top: npcNameInput.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+
+  Button
+    id: closeAddWindow
+    text: Cerrar
+    font: cipsoftFont
+    height: 24
+    anchors.top: addNpcButton.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    margin-top: 10
+]])
+
+local addNpcWindow = UI.createWindow('AddNpcWindow', rootWidget)
+addNpcWindow:hide()
+
+-- Agregar NPC a la lista
+addNpcWindow.addNpcButton.onClick = function()
+  local npcName = addNpcWindow.npcNameInput:getText():trim()
+  if npcName ~= "" and not table.find(tradeNpcs, npcName) then
+    table.insert(tradeNpcs, npcName)
+    storage.tradeNpcs = tradeNpcs
+    addNpcWindow.npcNameInput:setText("")
+    g_logger.info("NPC agregado a la lista: " .. npcName)
+  end
+end
+
+-- Boton cerrar ventana de agregar NPC
+addNpcWindow.closeAddWindow.onClick = function()
+  addNpcWindow:hide()
+end
+
+-- Boton flotante para abrir la ventana de agregar NPC
+local openAddNpcButton = UI.Button("NPC Comerciante", function()
+  addNpcWindow:show()
+  addNpcWindow:raise()
+  addNpcWindow:focus()
+end)
+openAddNpcButton:setColor("#00FFFF")
+openAddNpcButton:setWidth(120)
+openAddNpcButton:setHeight(28)
+openAddNpcButton:setFont("verdana-11px-rounded")
+
+-- Animacion de brillo para el titulo
+local titleLabel = addNpcWindow.addNpcTitle
+local text = "Agregar NPC"
+local glowPosition = 1
+local glowDirection = 1
+
+macro(50, function()
+  local numChars = #text
+  local glowRange = math.max(1, math.floor(numChars / 10))
+  local coloredText = {}
+
+  for i = 1, numChars do
+    local char = text:sub(i, i)
+    local color = "#00FFFF" -- Color base
+    if math.abs(i - glowPosition) <= glowRange then
+      color = "#BFFFFF" -- Color de brillo
+    end
+    table.insert(coloredText, char)
+    table.insert(coloredText, color)
+  end
+
+  glowPosition = glowPosition + glowDirection
+  if glowPosition > numChars then
+    glowPosition = numChars - 1
+    glowDirection = -1
+  elseif glowPosition < 1 then
+    glowPosition = 2
+    glowDirection = 1
+  end
+
+  if titleLabel then
+    titleLabel:setColoredText(coloredText)
+  end
+end)
+
+-- ==========================
+-- VENTANA AUTO DE TRADE/HI
+-- ==========================
+g_ui.loadUIFromString([[
+TradeWindow < MainWindow
+  size: 140 132
+
+  Label
+    id: tradeTitle
+    text: NPC Comerciante
+    font: verdana-11px-rounded
+    color: #00ffff
+    anchors.top: parent.top
+    anchors.horizontalCenter: parent.horizontalCenter
+    margin-top: -24 -- esto mueve el texto
+
+  Panel
+    id: tradeOptions
+    anchors.top: tradeTitle.bottom
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: tradeClose.top
+    margin-top: 10
+    layout:
+      type: verticalBox
+
+  Button
+    id: tradeClose
+    text: Cerrar
+    font: cipsoftFont
+    anchors.bottom: parent.bottom
+    anchors.right: parent.right
+    margin-right: -8
+    margin-bottom: -10
+    size: 60 23
+]])
+
+local tradeWindow = UI.createWindow('TradeWindow', rootWidget)
+tradeWindow:hide()
+
+-- Botones: Saludar y Trade
+local hiButton = g_ui.createWidget("Button", tradeWindow.tradeOptions)
+hiButton:setText("Saludar")
+hiButton:setFont("cipsoftFont")
+hiButton:setWidth(120)
+hiButton.onClick = function()
+  say("hi")
+end
+
+local tradeButton = g_ui.createWidget("Button", tradeWindow.tradeOptions)
+tradeButton:setText("Trade")
+tradeButton:setFont("cipsoftFont")
+tradeButton:setWidth(120)
+tradeButton:setMarginTop(4) -- <-- separacion de 4 pixeles respecto al boton "Saludar"
+tradeButton.onClick = function()
+  NPC.say("trade")
+end
+
+-- Boton cerrar ventana de trade
+tradeWindow.tradeClose.onClick = function()
+  tradeWindow:hide()
+end
+
+-- ==========================
+-- DETECCION AUTOMATICA NPCs
+-- ==========================
+local currentNpc = nil
+local isTradeVisible = false
+
+macro(200, function()
+  local npcFound
+  for _, name in ipairs(tradeNpcs) do
+    local npc = getCreatureByName(name)
+    if npc and getDistanceBetween(pos(), npc:getPosition()) <= 3 then
+      npcFound = npc
+      break
+    end
+  end
+
+  if npcFound and not isTradeVisible then
+    currentNpc = npcFound:getName()
+    tradeWindow:show()
+    tradeWindow:raise()
+    tradeWindow:focus()
+    isTradeVisible = true
+  elseif not npcFound and isTradeVisible then
+    tradeWindow:hide()
+    isTradeVisible = false
+    currentNpc = nil
+  end
+end)
+
+-- Animacion de brillo para el titulo
+local titleLabel = tradeWindow.tradeTitle
+local text = "NPC Comerciante"
+local glowPosition = 1
+local glowDirection = 1
+
+macro(50, function()
+  local numChars = #text
+  local glowRange = math.max(1, math.floor(numChars / 10))
+  local coloredText = {}
+
+  for i = 1, numChars do
+    local char = text:sub(i, i)
+    local color = "#00FFFF" -- Color base
+    if math.abs(i - glowPosition) <= glowRange then
+      color = "#BFFFFF" -- Color de brillo
+    end
+    table.insert(coloredText, char)
+    table.insert(coloredText, color)
+  end
+
+  glowPosition = glowPosition + glowDirection
+  if glowPosition > numChars then
+    glowPosition = numChars - 1
+    glowDirection = -1
+  elseif glowPosition < 1 then
+    glowPosition = 2
+    glowDirection = 1
+  end
+
+  if titleLabel then
+    titleLabel:setColoredText(coloredText)
+  end
+end)
+
+-- ===============================
+-- SCRIPT CREADO BY UNDERSKY
+-- ===============================
+
 -- Girar Script creado por Madgenius
 local actionUI = setupUI([[
 Panel
@@ -204,7 +458,7 @@ Panel
     anchors.left: parent.left
     anchors.right: parent.right
     margin-left: 1
-    height: 18
+    height: 20
     text: Girar Hacia 
 ]], parent)
 
