@@ -529,7 +529,7 @@ ConfigWindow < MainWindow
     text: SPELLS   SORCERER
     font: verdana-11px-rounded
     color: #a73ec1
-    margin-top: -20
+    margin-top: -18
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
 
@@ -925,7 +925,7 @@ ConfigWindow < MainWindow
     text: SPELLS   SPAM
     font: verdana-11px-rounded
     color: #a73ec1
-    margin-top: -30
+    margin-top: -18
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
 
