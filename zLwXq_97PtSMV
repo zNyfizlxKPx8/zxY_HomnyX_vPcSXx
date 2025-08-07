@@ -128,8 +128,285 @@ modules.game_textmessage.displayGameMessage("Acceso permitido. Scripts protegido
 -- scripts 
 
 -- Mensaje bienvenida con imagen Y tu name
-HTTP.get('https://raw.githubusercontent.com/UnderBot2/Zr2x4Dow8nlo4derrZ/refs/heads/main/X1cBi3nv3nid4c1X', function(script)
-    assert(loadstring(script))()
+--primeros pasos
+local function getPlayerName()
+    return player:getName() or "Underbot"  -- Usa "Mad Genius" como valor por defecto si no se puede obtener el nombre
+end
+
+-- Modificación en la definición de la UI
+g_ui.loadUIFromString([[
+mainuWindow < MainWindow
+  id: VentanaPrin
+  text: 
+  movable: false
+  size: 340 200
+  -border: 1 black
+  image-source:
+  image-align: center
+  image-smooth: false
+  movable: false
+
+  UIWidget
+    id: fondor1
+    anchors.top: parent.top
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    margin-top: 1
+    margin-left: 1
+    margin-right: 1
+    margin-bottom: 1
+    size: 300 300
+    image-source: /bot/MG/mg4.png
+    image-align: center
+    image-smooth: false
+    -- border: 1 black
+
+  UIWidget
+    id: im6
+    anchors.right: parent.right 
+    anchors.top: parent.top
+    margin-top: 50
+    margin-right: 80
+    -- border: 1 black
+    size: 30 30
+    image-source: /bot/MG/mg6.png
+    image-smooth: true
+    image-align: center
+
+  UIWidget
+    id: im25
+    anchors.right: parent.right 
+    anchors.top: parent.top
+    margin-top: 50
+    margin-right: 210
+    -- border: 1 black
+    size: 30 30
+    image-source: /bot/MG/mg25.png
+    image-smooth: true
+    image-align: center
+
+  UIWidget
+    id: im14
+    anchors.left: parent.left 
+    anchors.top: parent.top
+    margin-top: 102
+    margin-left: 143
+    -- border: 1 black
+    size: 25 25
+    image-source:
+    image-smooth: true
+    image-align: center
+
+  Label
+    id: nameku
+    anchors.left: parent.left 
+    anchors.top: parent.top
+    margin-top: 60
+    margin-left: 100
+    -- border: 1 black
+    size: 100 18
+    text-align: center
+    text: Bienvenido 
+    color: orange
+    font: verdana-11px-monochrome 
+
+  Label
+    id: nameki
+    anchors.left: parent.left 
+    anchors.top: parent.top
+    margin-top: 78
+    margin-left: 61
+    -- border: 3 black
+    size: 190 25
+    text-align: center
+    color: yellow
+    font: sans-bold-16px 
+    text: ]] .. getPlayerName() .. [[
+]])
+
+local rootWidget = g_ui.getRootWidget()
+local mainuWindow = UI.createWindow('mainuWindow', rootWidget)
+
+
+-- Mostrar la ventana inmediatamente
+--mainuWindow:show()
+--mainuWindow:raise()
+--mainuWindow:focus()
+
+--UI.Button("hide window", function()
+    --mainuWindow:hide()
+   -- mainuWindow:raise()
+   -- mainuWindow:focus()
+--end)
+
+-- Cerrar después de 3 segundos (3000 milisegundos)
+--macro(5000, function()
+   -- if mainuWindow then  -- Verificación para evitar errores
+     --   mainuWindow:hide()
+   -- end
+--end)
+
+
+
+
+local customFolder = "/bot/MG/"  -- Carpeta nueva
+local imageUrls = {
+    "https://i.imgur.com/q4f2M75.png", --background ventana
+    "https://i.imgur.com/aLj89M0.png", --imagen color
+    "https://i.imgur.com/mY4Zaf6.png", --imagen sincolor
+    "https://i.imgur.com/qz6DF5p.png", -- back ventana prin
+    "https://i.imgur.com/YwAY5AG.png", --ventana extra
+    "https://i.imgur.com/ZBYlrIP.png", --inicia iconos personajes
+    "https://i.imgur.com/YotBMCu.png",
+    "https://i.imgur.com/BTUFJK8.png",
+    "https://i.imgur.com/COopCt2.png",
+    "https://i.imgur.com/28cFUXN.png",
+    "https://i.imgur.com/krwObnR.png",
+    "https://i.imgur.com/ovZrFcK.png",
+    "https://i.imgur.com/6yyizhs.png",
+    "https://i.imgur.com/RAo59iG.png",
+    "https://i.imgur.com/Os0Y4hr.png",
+    "https://i.imgur.com/jNesXN5.png",
+    "https://i.imgur.com/sEj9oPX.png",
+    "https://i.imgur.com/FWde06L.png",
+    "https://i.imgur.com/A3m7hop.png",
+    "https://i.imgur.com/pOldZUN.png",
+    "https://i.imgur.com/cBDolXN.png",
+    "https://i.imgur.com/XsHcuaz.png",
+    "https://i.imgur.com/ltfLWaO.png",
+    "https://i.imgur.com/llAHWpq.png",
+    "https://i.imgur.com/06C4N0D.png", -- termina lista
+    "https://i.imgur.com/39yQgBo.png", -- inicia shield
+    "https://i.imgur.com/HlF6nbX.png",
+    "https://i.imgur.com/W8LTHSQ.png", --termina shield
+    "https://i.imgur.com/p45vUm5.png", --tagblanco
+    "https://i.imgur.com/pUR0vU5.png", --tagmorado
+    "https://i.imgur.com/sinINhT.png", --tagverde
+    "https://i.imgur.com/jFaXac7.png", --tagamarillo
+    "https://i.imgur.com/bCzKmFr.png", --tagazul
+    "https://i.imgur.com/76rV4IA.png", --tagazulpc
+    "https://i.imgur.com/wapxsrE.png", --tagamarillopc
+    "https://i.imgur.com/pt6jvWd.png", --tagverdepc
+    "https://i.imgur.com/bYbhAqc.png", --tagmoradopc
+    "https://i.imgur.com/km2IQfP.png" --tagblancopc
+}
+
+local imageNames = {
+    "mg.png",        --background ventana versiones (q4f2M75.png)
+    "mg2.png",       --imagen color (aLj89M0.png)
+    "mg3.png",       --imagen sincolor (mY4Zaf6.png)
+    "mg4.png",       --back ventana prin (qz6DF5p.png)
+    "mg5.png",       --ventana extra (YwAY5AG.png)
+    "mg6.png",       --icono personaje 1 (ZBYlrIP.png)
+    "mg7.png",       --icono personaje 2 (YotBMCu.png)
+    "mg8.png",       --icono personaje 3 (BTUFJK8.png)
+    "mg9.png",       --icono personaje 4 (COopCt2.png)
+    "mg10.png",      --icono personaje 5 (28cFUXN.png)
+    "mg11.png",      --icono personaje 6 (krwObnR.png)
+    "mg12.png",      --icono personaje 7 (ovZrFcK.png)
+    "mg13.png",      --icono personaje 8 (6yyizhs.png)
+    "mg14.png",      --icono personaje 9 (RAo59iG.png)
+    "mg15.png",      --icono personaje 10 (Os0Y4hr.png)
+    "mg16.png",      --icono personaje 11 (jNesXN5.png)
+    "mg17.png",      --icono personaje 12 (sEj9oPX.png)
+    "mg18.png",      --icono personaje 13 (FWde06L.png)
+    "mg19.png",      --icono personaje 14 (A3m7hop.png)
+    "mg20.png",      --icono personaje 15 (pOldZUN.png)
+    "mg21.png",      --icono personaje 16 (cBDolXN.png)
+    "mg22.png",      --icono personaje 17 (XsHcuaz.png)
+    "mg23.png",      --icono personaje 18 (ltfLWaO.png)
+    "mg24.png",      --icono personaje 19 (llAHWpq.png)
+    "mg25.png",      --icono personaje 20 (06C4N0D.png)
+    "mg26.png",      --shield 1 (39yQgBo.png)
+    "mg27.png",      --shield 2 (HlF6nbX.png)
+    "mg28.png",     --shield 3 (W8LTHSQ.png)
+    "tag_blanco1.png", --mobil
+    "tag_morado1.png",
+    "tag_verde1.png",
+    "tag_amarillo1.png",
+    "tag_azul1.png", --mobil
+    "tag_azul2.png", --pc
+    "tag_amarillo2.png",
+    "tag_verde2.png",
+    "tag_morado2.png",
+    "tag_blanco2.png" --pc
+}
+
+-- Variables para controlar las descargas
+local downloadsCompleted = 0
+local totalDownloads = #imageUrls
+local needsReload = false
+
+-- Crear la carpeta si no existe
+if not g_resources.directoryExists(customFolder) then
+    g_resources.makeDir(customFolder)
+    needsReload = true  -- Si creamos la carpeta, necesitamos recargar
+end
+
+-- Función para descargar y guardar una imagen
+local function downloadImage(url, filename)
+    if not g_resources.fileExists(customFolder .. filename) then
+        HTTP.get(url, function(data, err)
+            if not err then
+                g_resources.writeFileContents(customFolder .. filename, data)
+                -- print("Imagen descargada en: " .. customFolder .. filename)
+                needsReload = true  -- Marcamos que necesitamos recargar
+            else
+                print("Error al descargar " .. url .. ": " .. err)
+            end
+            
+            downloadsCompleted = downloadsCompleted + 1
+            if downloadsCompleted == totalDownloads and needsReload then
+                --print("Recargando...")
+                reload()
+                mainuWindow:show()
+            end
+        end)
+    else
+        --print("La imagen ya existe en: " .. customFolder .. filename)
+        downloadsCompleted = downloadsCompleted + 1
+        if downloadsCompleted == totalDownloads and needsReload then
+            --print("Recargando...")
+            reload()
+            mainuWindow:show()
+        end
+    end
+end
+
+-- Descargar todas las imágenes
+for i, url in ipairs(imageUrls) do
+    downloadImage(url, imageNames[i])
+end
+
+
+-- Cambiar imagen aleatoria en im14
+local shieldImages = {"mg26.png", "mg27.png", "mg28.png"}
+local randomShield = shieldImages[math.random(#shieldImages)]
+mainuWindow:getChildById("im14"):setImageSource(customFolder .. randomShield)
+
+-- Lista de imágenes disponibles para im6 e im25 (mg6.png a mg25.png)
+local characterImages = {
+    "mg6.png", "mg7.png", "mg8.png", "mg9.png", "mg10.png",
+    "mg11.png", "mg12.png", "mg13.png", "mg14.png", "mg15.png",
+    "mg16.png", "mg17.png", "mg18.png", "mg19.png", "mg20.png",
+    "mg21.png", "mg22.png", "mg23.png", "mg24.png", "mg25.png"
+}
+
+-- Cambiar imagen aleatoria en im6
+local randomChar1 = characterImages[math.random(#characterImages)]
+mainuWindow:getChildById("im6"):setImageSource(customFolder .. randomChar1)
+
+-- Cambiar imagen aleatoria en im25
+local randomChar2 = characterImages[math.random(#characterImages)]
+mainuWindow:getChildById("im25"):setImageSource(customFolder .. randomChar2)
+
+
+-- Cerrar de segundos (3000 milisegundos)
+macro(3500, function()
+    if mainuWindow then  -- Verificación para evitar errores
+        mainuWindow:hide()
+    end
 end)
 
 setDefaultTab("Main")
