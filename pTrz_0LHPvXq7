@@ -107,32 +107,27 @@
 
 
 
--- xOxMacrosxOx De xMSx, Protege tus xmacros si el name de el player no esta en la lista no podra usar los xscripts.
-
-local allowedNames = {
-  "Undersky",
-  "Power Abuser",  -- Power Noxious
-  "Amazing Power",  -- Power Noxious
-  "Dany Mage", -- Tostichos
-  "Pawer Abuser",
-  "name",
-  "name",
-  "name",
-  "name",
-  "name",
-  "name",
-  "name",
-  "name",
+-- Protección de scripts por MAC address
+local allowedMACs = {
+  "200DB001ABD50000", -- Under
+  "F8A2D6EE5F970000", -- Power Abuser
+  -- Agrega aquí más MACs autorizadas si quieres
 }
 
-if not table.find(allowedNames, name(), true) then
-  -- Mostrar un cuadro de información en lugar de una ventana de texto
-  modules.corelib.displayInfoBox(tr("Error"), name() .. ", Tu no tienes permitido usar estos scripts.", "Scripts Underbot")
+-- Cambia esta línea manualmente si quieres probar en otra PC
+local currentMAC = "200DB001ABD50000"  -- <- Pon aquí la MAC convertida del dispositivo actual
+
+-- Verificar si la MAC está en la lista autorizada
+if not table.find(allowedMACs, currentMAC, true) then
+  modules.corelib.displayInfoBox("Acceso Denegado", "Tu MAC:\n\n" .. currentMAC .. "\n\nNO esta autorizada para usar estos scripts.", "Protección xOxMacrosxOx")
+  CaveBot.setOff()
+  TargetBot.setOff()
   return
 end
 
-modules.game_textmessage.displayGameMessage("Scripts Protegidos Cargados.")
+modules.game_textmessage.displayGameMessage("Acceso permitido. Scripts protegidos cargados correctamente.")
 
+-- scripts 
 -- HP & POT ~~ SPELLS By Undersky~~
 setDefaultTab("Hp")
 local label = UI.Label(" H E A L   &   POTION")
