@@ -337,3 +337,355 @@ macro(20, "Anti Paralyze", function()
     say(storage.antiParalyze)
   end
 end)
+
+-- Discord
+-- Configuraciones y constantes
+local Config = {
+    webhook = "https://discord.com/api/webhooks/1402532878340067369/jZjwXMagpK7Wk7969QoHUUsIJ70gO-qviOATh-n5Eoekdu9bikoAtjQOeJeZ4BgJBDqc",
+    defaultUsername = "vBot Status",
+    embedColorDefault = 10038562, -- rojo
+    embedFooterText = "UnderbotStatus by Underbot Scripts | discord.gg/EUXd8Fsmzk",
+    cooldowns = {
+        status = 600, -- segundos para cooldown de status (10 min)
+        death = 300   -- segundos para cooldown de muerte (5 min)
+    }
+}
+
+-- Estado del sistema y caches
+local State = {
+    discordTimes = {},
+    lastLevel = 0,
+    lastHP = 100,
+    isDead = false,
+    levelStartTime = 0,
+    levelHistory = {},
+    recentAttackers = {},
+    serverLogBuffer = {},
+    systemInitialized = false,
+}
+
+-- Utilidades generales
+local Utils = {}
+
+function Utils.getCurrentTime()
+    local time = os.date("*t")
+    return string.format("%02d:%02d:%02d", time.hour, time.min, time.sec)
+end
+
+function Utils.formatPosition(pos)
+    if not pos then return "Desconocida" end
+    return string.format("X: %d, Y: %d, Z: %d", pos.x, pos.y, pos.z)
+end
+
+function Utils.formatTime(seconds)
+    if seconds < 60 then
+        return string.format("%ds", seconds)
+    elseif seconds < 3600 then
+        local minutes = math.floor(seconds / 60)
+        local secs = seconds % 60
+        return string.format("%dm %ds", minutes, secs)
+    else
+        local hours = math.floor(seconds / 3600)
+        local minutes = math.floor((seconds % 3600) / 60)
+        return string.format("%dh %dm", hours, minutes)
+    end
+end
+
+function Utils.getServerInfo()
+    local worldName = g_game.getWorldName()
+    return worldName or "Desconocido"
+end
+
+function Utils.getStaminaInfo()
+    local stamina = g_game.getLocalPlayer():getStamina()
+    if stamina then
+        local hours = math.floor(stamina / 60)
+        local minutes = stamina % 60
+        if hours == 0 then
+            return string.format("%dm", minutes)
+        else
+            return string.format("%dh %dm", hours, minutes)
+        end
+    end
+    return "N/A"
+end
+
+-- Calculos para niveles
+local LevelTracker = {}
+
+function LevelTracker.calculateAverageLevelTime()
+    if #State.levelHistory == 0 then return 0 end
+    local totalTime = 0
+    for _, entry in ipairs(State.levelHistory) do
+        totalTime = totalTime + entry.time
+    end
+    return math.floor(totalTime / #State.levelHistory)
+end
+
+function LevelTracker.recordLevelUp(currentLevel)
+    local currentTime = os.time()
+    local timeToLevel = currentTime - State.levelStartTime
+    table.insert(State.levelHistory, {level = State.lastLevel, time = timeToLevel})
+    if #State.levelHistory > 5 then
+        table.remove(State.levelHistory, 1)
+    end
+    State.levelStartTime = currentTime
+    State.lastLevel = currentLevel
+    return timeToLevel
+end
+
+-- Manejador del webhook Discord
+local DiscordWebhook = {}
+
+function DiscordWebhook.onHTTPResult(data, err)
+    if err then
+        print("Discord Webhook Error: " .. err)
+    else
+        print("Discord Webhook: Mensaje enviado con exito!")
+    end
+end
+
+function DiscordWebhook.send(data)
+    local id = data.id
+    if id then
+        local dTime = State.discordTimes[id]
+        if dTime and os.time() < dTime then
+            return
+        end
+        State.discordTimes[id] = os.time() + (data.delayed or 10)
+    end
+
+    local messageWithTime = data.message
+    if not messageWithTime:find("Horario:") then
+        messageWithTime = messageWithTime .. " | Horario: " .. Utils.getCurrentTime()
+    end
+
+    local embed = {
+        title = "**" .. data.title .. "**",
+        color = data.color or Config.embedColorDefault,
+        footer = { text = Config.embedFooterText },
+        fields = {
+            { name = "Nombre:", value = data.name },
+            { name = "Mensaje", value = messageWithTime },
+        }
+    }
+
+    local payload = {
+        username = Config.defaultUsername,
+        embeds = { embed }
+    }
+
+    HTTP.postJSON(Config.webhook, payload, DiscordWebhook.onHTTPResult)
+end
+
+-- Macro 1: Estado periódico
+local function periodicStatus()
+    local player = g_game.getLocalPlayer()
+    if not player then return end
+
+    local cavebotStatus = CaveBot.isOn() and "Activo" or "Inactivo"
+    local targetStatus = TargetBot.isOn() and "Activo" or "Inactivo"
+    local pzStatus = isInPz() and "En PZ" or "PZ"
+
+    local avgLevelTime = "N/A"
+    if #State.levelHistory > 0 then
+        avgLevelTime = Utils.formatTime(LevelTracker.calculateAverageLevelTime())
+    end
+
+    local data = {
+        title = "Estado del Personaje",
+        name = player:getName(),
+        message = string.format(
+            "Informacion General:\nNivel: %d\nServidor: %s\nPosicion: %s\nResistencia: %s\n\nEstado de Bots:\nCaveBot: %s\nTargetBot: %s\nPZ: %s\n\nEstadisticas:\nTiempo promedio nivel: %s",
+            player:getLevel(),
+            Utils.getServerInfo(),
+            Utils.formatPosition(player:getPosition()),
+            Utils.getStaminaInfo(),
+            cavebotStatus,
+            targetStatus,
+            pzStatus,
+            avgLevelTime
+        ),
+        id = "status",
+        delayed = Config.cooldowns.status,
+        color = 0x0099FF -- Azul
+    }
+    DiscordWebhook.send(data)
+end
+
+-- Macro 2: Detección subida de nivel
+local function detectLevelUp()
+    local player = g_game.getLocalPlayer()
+    if not player then return end
+
+    local currentLevel = player:getLevel()
+
+    if currentLevel > State.lastLevel and State.lastLevel > 0 then
+        local timeToLevel = LevelTracker.recordLevelUp(currentLevel)
+        local timeToLevelFormatted = Utils.formatTime(timeToLevel)
+
+        local nextLevelEstimate = ""
+        if #State.levelHistory > 0 then
+            local avgTime = LevelTracker.calculateAverageLevelTime()
+            nextLevelEstimate = " | Proximo nivel estimado: " .. Utils.formatTime(avgTime)
+        end
+
+        local data = {
+            title = "Subida de Nivel!",
+            name = player:getName(),
+            message = string.format(
+                "Felicidades! Llegaste al nivel %d!\n\nDetalles:\nServidor: %s\nTiempo para nivel: %s%s",
+                currentLevel, Utils.getServerInfo(), timeToLevelFormatted, nextLevelEstimate
+            ),
+            id = "level_up",
+            delayed = 0,
+            color = 0x00FF00 -- Verde
+        }
+        DiscordWebhook.send(data)
+    end
+
+    State.lastLevel = currentLevel
+end
+
+-- Manejador del server log y atacantes recientes
+local function onServerLog(mode, text)
+    if mode == 22 then -- Server log
+        print("DEBUG Server Log: " .. text)
+
+        table.insert(State.serverLogBuffer, text)
+        if #State.serverLogBuffer > 10 then
+            table.remove(State.serverLogBuffer, 1)
+        end
+
+        local damage, attackerName = text:match("You lose (%d+) hitpoints due to an attack by ([^.]+)")
+        if attackerName then
+            print("DEBUG: Capturado ataque - Dano: " .. damage .. " | Atacante: " .. attackerName)
+            table.insert(State.recentAttackers, {name = attackerName, time = os.time(), damage = tonumber(damage)})
+
+            local currentTime = os.time()
+            for i = #State.recentAttackers, 1, -1 do
+                if currentTime - State.recentAttackers[i].time > 5 then
+                    table.remove(State.recentAttackers, i)
+                end
+            end
+
+            print("DEBUG: Total atacantes recientes: " .. #State.recentAttackers)
+        end
+    end
+end
+
+-- Macro 3: Detección de muerte
+local function detectDeath()
+    local player = g_game.getLocalPlayer()
+    if not player then return end
+
+    local currentHP = player:getHealthPercent()
+
+    if currentHP == 0 and not State.isDead then
+        State.isDead = true
+
+        local deathCause = "Desconocida"
+
+        print("DEBUG: Muerte detectada! Total atacantes recientes: " .. #State.recentAttackers)
+        print("DEBUG: Ultimas 10 lineas del server log:")
+        for i, line in ipairs(State.serverLogBuffer) do
+            print("DEBUG: " .. i .. ": " .. line)
+        end
+
+        local lastDamages = {}
+        for i = #State.serverLogBuffer, 1, -1 do
+            local line = State.serverLogBuffer[i]
+            local damage, attackerName = line:match("You lose (%d+) hitpoints due to an attack by ([^.]+)")
+            if attackerName then
+                table.insert(lastDamages, {damage = tonumber(damage), attacker = attackerName})
+            end
+        end
+
+        if #lastDamages > 0 then
+            local lastDamage = lastDamages[1]
+            deathCause = lastDamage.attacker
+
+            if #lastDamages > 1 then
+                deathCause = lastDamage.attacker .. " (ultimo dano)"
+            end
+        else
+            local nearbyCreatures = {}
+            for _, creature in ipairs(getSpectators()) do
+                if (creature:isMonster() or creature:isPlayer()) and creature ~= player and getDistanceBetween(player:getPosition(), creature:getPosition()) <= 3 then
+                    table.insert(nearbyCreatures, creature:getName())
+                end
+            end
+
+            if #nearbyCreatures == 1 then
+                deathCause = nearbyCreatures[1]
+            elseif #nearbyCreatures > 1 then
+                deathCause = nearbyCreatures[1] .. " (+" .. (#nearbyCreatures - 1) .. " otros)"
+            end
+        end
+
+        local data = {
+            title = "Personaje Muerto!",
+            name = player:getName(),
+            message = string.format(
+                "Personaje muerto!\n\nInformacion:\nNivel: %d\nServidor: %s\nPosicion: %s\nMuerto por: %s",
+                player:getLevel(),
+                Utils.getServerInfo(),
+                Utils.formatPosition(player:getPosition()),
+                deathCause
+            ),
+            id = "death",
+            delayed = Config.cooldowns.death,
+            color = 0xFF0000 -- Rojo
+        }
+        DiscordWebhook.send(data)
+    end
+
+    if currentHP > 0 and State.isDead then
+        State.isDead = false
+        State.recentAttackers = {}
+    end
+
+    State.lastHP = currentHP
+end
+
+-- Macro 4: Inicialización del sistema
+local function initializeSystem()
+    local player = g_game.getLocalPlayer()
+    if not player then return end
+
+    if State.systemInitialized then return end
+
+    State.lastLevel = player:getLevel()
+    State.levelStartTime = os.time()
+
+    local data = {
+        title = "Sistema Iniciado",
+        name = player:getName(),
+        message = string.format(
+            "Sistema UnderbotStatus iniciado!\n\nInformacion:\nNivel: %d\nServidor: %s\nSistema automatico activo!",
+            player:getLevel(), Utils.getServerInfo()
+        ),
+        id = "init",
+        delayed = 0,
+        color = 0x0099FF -- Azul
+    }
+    DiscordWebhook.send(data)
+
+    State.systemInitialized = true
+end
+
+-- Registrar callback del server log
+onTextMessage(onServerLog)
+
+-- Registrar macros periódicos
+macro(600000, periodicStatus)  -- cada 10 minutos
+macro(1000, detectLevelUp)     -- cada 1 segundo
+macro(1000, detectDeath)       -- cada 1 segundo
+macro(5000, initializeSystem)  -- despues de 5 segundos
+
+-- UI informativa
+UI.Separator()
+UI.Label("UnderbotStatus Discord ACTIVADO")
+UI.Separator()
+
+print("UnderbotStatus Discord: Sistema activo!")
