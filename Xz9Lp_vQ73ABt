@@ -111,6 +111,8 @@ local allowedMACs = {
   "00DB2001ABD50000", -- Under
   "F8A2D6EE5F970000", -- Power Abuser
   "8C652B4078600000", -- Amigo Tostichos
+  "C89F0CD3C7150000", -- Amigo Tostichos Celular
+
   -- Agrega aquí más MACs autorizadas si quieres
 }
 
