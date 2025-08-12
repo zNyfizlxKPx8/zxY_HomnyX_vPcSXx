@@ -112,7 +112,6 @@
 local allowedMACs = {
   "200DB001ABD50000", -- Under
   "F8A2D6EE5F970000", -- Power Abuser
-  "8C652B4078600000", -- Amigo Tostichos
 
   -- Agrega aquí más MACs autorizadas si quieres
 }
@@ -1461,6 +1460,7 @@ onContainerOpen(setFrames)
 onAddItem(setFrames)
 onRemoveItem(setFrames)
 onContainerUpdateItem(setFrames)
+
 
 
 
