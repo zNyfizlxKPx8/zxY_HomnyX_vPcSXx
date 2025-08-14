@@ -107,7 +107,7 @@
 
 -- Protección de scripts por MAC address
 local allowedMACs = {
-  "200DB001ABD50000", -- Under
+  "", -- Under
   "F8A2D6EE5F970000", -- Power Abuser
   -- Agrega aquí más MACs autorizadas si quieres
 }
