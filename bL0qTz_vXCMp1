@@ -106,8 +106,9 @@
 
 -- Protección de scripts por MAC address
 local allowedMACs = {
-  "", -- Under
+  "8C652B4078600000", -- Pashyman Amigo tostichos
   "F8A2D6EE5F970000", -- Power Abuser
+  "200DB001ABD50000", -- Under
 
   -- Agrega aquí más MACs autorizadas si quieres
 }
@@ -124,7 +125,6 @@ if not table.find(allowedMACs, currentMAC, true) then
 end
 
 modules.game_textmessage.displayGameMessage("Acceso permitido. Scripts protegidos cargados correctamente.")
-
 -- scripts 
 setDefaultTab("Main")
 local commandModuleName = "commandModule"
@@ -2120,6 +2120,7 @@ createButtonAndSetupEvents(commandModuleWindow.fifthPanel.venButton, favoriteMod
 createButtonAndSetupEvents(commandModuleWindow.fifthPanel.smartButton, favoriteModuleUI, commandModuleWindow.fifthPanel.smartFavorite, commandModuleName, onSmartButtonClick)
 createButtonAndSetupEvents(commandModuleWindow.fifthPanel.stopButton, favoriteModuleUI, commandModuleWindow.fifthPanel.stopFavorite, commandModuleName, onStopButtonClick)
 createButtonAndSetupEvents(commandModuleWindow.fifthPanel.globalbonusButton, favoriteModuleUI, commandModuleWindow.fifthPanel.globalbonusFavorite, commandModuleName, onGlobalBonusButtonClick)
+
 
 
 
