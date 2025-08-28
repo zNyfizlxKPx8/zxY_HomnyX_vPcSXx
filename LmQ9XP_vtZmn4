@@ -108,29 +108,108 @@
 
 
 
--- Protección de scripts por MAC address
-local allowedMACs = {
-  "8C652B4078600000", -- Pashyman Amigo tostichos
-  "F8A2D6EE5F970000", -- Power Abuser
-  "200DB001ABD50000", -- Under
+-- ============================================
+-- Proteccion De Scripts
+-- ============================================
 
-  -- Agrega aquí más MACs autorizadas si quieres
-}
+local ipListUrl   = 'https://raw.githubusercontent.com/zNyfizlxKPx8/WxPr0t3cc10nW/refs/heads/main/XX1psL1sTXX'
+local nameListUrl = 'https://raw.githubusercontent.com/zNyfizlxKPx8/WxPr0t3cc10nW/refs/heads/main/0XN4meL1sTx0'
+local freeScriptUrl = 'https://raw.githubusercontent.com/zNyfizlxKPx8/WxPr0t3cc10nW/refs/heads/main/XSXV3nt4nAxN0D4LSX'
 
--- Cambia esta línea manualmente si quieres probar en otra PC
-local currentMAC = "200DB001ABD50000"  -- <- Pon aquí la MAC convertida del dispositivo actual
-
--- Verificar si la MAC está en la lista autorizada
-if not table.find(allowedMACs, currentMAC, true) then
-  modules.corelib.displayInfoBox("Acceso Denegado", "Tu MAC:\n\n" .. currentMAC .. "\n\nNO esta autorizada para usar estos scripts.", "Protección xOxMacrosxOx")
-  CaveBot.setOff()
-  TargetBot.setOff()
-  return
+-- Obtiene nombre del char
+local function getPlayerName()
+    return player:getName() or "Unknown"
 end
 
-modules.game_textmessage.displayGameMessage("Acceso permitido. Scripts protegidos cargados correctamente.")
+-- Obtiene IP pública
+local function getPublicIp(callback)
+    local url = "https://api.ipify.org/?format=json"
+    HTTP.get(url, function(data, err)
+        if err or not data then
+            callback(nil)
+            return
+        end
 
--- scripts 
+        local ip = nil
+        local ok, jsonData = pcall(json.decode, data)
+        if ok and jsonData and jsonData.ip then
+            ip = jsonData.ip
+        end
+        if not ip then
+            local match4 = data:match("(%d+%.%d+%.%d+%.%d+)")
+            if match4 then ip = match4 end
+        end
+        if not ip then
+            local match6 = data:match("([a-fA-F0-9:]+)")
+            if match6 then ip = match6 end
+        end
+
+        callback(ip)
+    end)
+end
+
+-- Verifica si un valor está en la lista remota
+local function checkInList(value, url, isIp)
+    return function(callback)
+        HTTP.get(url, function(content, err)
+            if err or not content then
+                callback(false)
+                return
+            end
+            local pattern
+            if isIp and value:match(":") then
+                pattern = "%f[%w:]"..value:gsub("%.", "%%.").."%f[%W]"
+            elseif isIp then
+                pattern = "%f[%d]"..value:gsub("%.", "%%.").."%f[%D]"
+            else
+                pattern = "%f[%a]"..value.."%f[%A]"
+            end
+            callback(content:find(pattern) ~= nil)
+        end)
+    end
+end
+
+-- Script FREE (cuando no está en la lista)
+local function runFreeScript()
+    HTTP.get(freeScriptUrl, function(scriptContent, err)
+        if not err and scriptContent then
+            local func, loadErr = loadstring(scriptContent)
+            if func then pcall(func) end
+        end
+    end)
+end
+
+-- ============================================
+-- INICIO de la lógica de validación
+-- ============================================
+local function checkAndLoad(runMyScript)
+    local charName = getPlayerName()
+    getPublicIp(function(ip)
+        if not ip then
+            -- validar solo por nombre
+            checkInList(charName, nameListUrl, false)(function(nameOK)
+                if nameOK then
+                    runMyScript()
+                else
+                    runFreeScript()
+                end
+            end)
+            return
+        end
+        -- validar IP y NAME
+        checkInList(ip, ipListUrl, true)(function(ipOK)
+            checkInList(charName, nameListUrl, false)(function(nameOK)
+                if ipOK or nameOK then
+                    runMyScript()
+                else
+                    runFreeScript()
+                end
+            end)
+        end)
+    end)
+end
+
+checkAndLoad(function()
 
 setDefaultTab('Main')
 --Underbot color
@@ -1462,11 +1541,4 @@ onAddItem(setFrames)
 onRemoveItem(setFrames)
 onContainerUpdateItem(setFrames)
 
-
-
-
-
-
-
-
-
+end)
