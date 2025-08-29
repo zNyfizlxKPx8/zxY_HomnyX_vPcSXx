@@ -251,7 +251,7 @@ end)
 
 -- Mueve el panel de UI a la posición deseada
 ui:breakAnchors() -- Rompe las restricciones de posición actuales del panel
-ui:move(615,50) -- Mueve el panel a la posición (300, 10)
+ui:move(660,50) -- Mueve el panel a la posición (300, 10)
 
 -- Cambio Colores del Bot Panel edit y on
 function setRainbowColor(time)
@@ -1543,5 +1543,6 @@ onRemoveItem(setFrames)
 onContainerUpdateItem(setFrames)
 
 end)
+
 
 
