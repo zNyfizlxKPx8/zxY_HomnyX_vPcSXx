@@ -1025,7 +1025,6 @@ local speed_macro = macro(10, "Equip Speed EQ", function(m)
         m:setOff()
     end)
 end, equipTab)
-
 end)
 
 -- Exiva deluxe
