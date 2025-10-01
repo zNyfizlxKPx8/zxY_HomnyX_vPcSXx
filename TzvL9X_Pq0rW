@@ -1026,7 +1026,7 @@ local speed_macro = macro(10, "Equip Speed EQ", function(m)
     end)
 end, equipTab)
 
--- Exiva deluxe
+-- Exiva
 local configName = modules.game_bot.contentsPanel.config:getCurrentOption().text
 local pathBot = "/bot/" .. configName .. "/"
 
@@ -1041,8 +1041,8 @@ UIWidget
 if not storage["exiva/senseAdvanced"] then
   storage["exiva/senseAdvanced"] = {
     Spell = "exiva",
-    LastTargetKey = "t",
-    LastSenseKey = "v",
+    LastTargetKey = "home",
+    LastSenseKey = "end",
     LastSensedPlayer = nil
   }
 end
@@ -1056,13 +1056,13 @@ end)
 UI.Separator()
 
 UI.Label("Tecla para ultimo objetivo")
-UI.TextEdit(config.LastTargetKey or "t", function(widget, text)
+UI.TextEdit(config.LastTargetKey or "home", function(widget, text)
     config.LastTargetKey = text
 end)
 UI.Separator()
 
 UI.Label("Tecla para ultimo sense/exiva")
-UI.TextEdit(config.LastSenseKey or "v", function(widget, text)
+UI.TextEdit(config.LastSenseKey or "end", function(widget, text)
     config.LastSenseKey = text
 end)
 UI.Separator()
@@ -1188,4 +1188,6 @@ macro(1000,function()
   if g_game.isAttacking() then
      storage.atkExiva = g_game.getAttackingCreature():getName()
   end
+end)
+
 end)
