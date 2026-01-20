@@ -942,3 +942,227 @@ UI.TextEdit(config.alLlegarAlLabel or "Salir", function(widget, text)
 end)
 
 end)
+
+setDefaultTab("Cave")
+--====================================================
+--  Death Limit System - Creado por **Undersky**
+--  Apaga CaveBot y TargetBot al superar X muertes.
+--  Incluye auto relog, contador visual y alerta.
+--====================================================
+
+-- ================= CONFIG =================
+storage.deathConfig = storage.deathConfig or {
+  limit = 3
+}
+
+if type(storage.death) ~= "table" then
+  storage.death = { count = 0, stopOnLogin = false }
+end
+
+-- ================= UI =================
+UI.Separator()
+UI.Label("Control De Muertes"):setColor("#FF5555")
+
+UI.Label("Limite de Muertes"):setColor("#00FFFF")
+UI.TextEdit(tostring(storage.deathConfig.limit), function(widget, text)
+  local v = tonumber(text)
+  if v and v > 0 then
+    storage.deathConfig.limit = math.floor(v)
+  end
+end)
+
+UI.Separator()
+
+local deathLabel = UI.Label("Contador Muertes: " .. storage.death.count)
+
+local function updateColor()
+  if storage.death.count >= storage.deathConfig.limit then
+    deathLabel:setColor("red")
+  elseif storage.death.count >= math.max(1, storage.deathConfig.limit - 1) then
+    deathLabel:setColor("orange")
+  else
+    deathLabel:setColor("green")
+  end
+end
+updateColor()
+
+UI.Button("Reset Deaths", function()
+  storage.death.count = 0
+  storage.death.stopOnLogin = false
+  deathLabel:setText("Contador Muertes: 0")
+  updateColor()
+end)
+
+-- ================= DETECTOR DE MUERTE =================
+local wasDead = false
+macro(250, "Death Detector", function()
+  local player = g_game.getLocalPlayer()
+  if not player then return end
+
+  if player:getHealth() <= 0 then
+    if not wasDead then
+      storage.death.count = storage.death.count + 1
+      deathLabel:setText("Contador Muertes: " .. storage.death.count)
+      updateColor()
+
+      if storage.death.count >= storage.deathConfig.limit then
+        storage.death.stopOnLogin = true
+        warn("Limite de muertes alcanzado (" ..
+             storage.death.count .. "/" ..
+             storage.deathConfig.limit .. ")")
+      end
+
+      -- Auto relog SOLO si no se alcanzo el limite
+      if not storage.death.stopOnLogin then
+        schedule(15000, function()
+          modules.client_entergame.CharacterList.doLogin()
+        end)
+      end
+
+      wasDead = true
+    end
+  else
+    wasDead = false
+  end
+end)
+
+-- ================= LOGIN CHECKER =================
+local alreadyHandled = false
+macro(500, "Login Checker", function()
+  local player = g_game.getLocalPlayer()
+
+  if player and not alreadyHandled then
+    alreadyHandled = true
+
+    if storage.death.stopOnLogin then
+      CaveBot:setOff()
+      TargetBot:setOff()
+      warn("CaveBot apagado por limite de muertes.")
+
+      schedule(500, function()
+        modules.game_textmessage.displayGameMessage(
+          "CaveBot apagado por limite de muertes!"
+        )
+      end)
+    end
+  end
+
+  if not player then
+    alreadyHandled = false
+  end
+end)
+
+-- ================= Cavebot Controller (By Undersky) =================
+g_ui.loadUIFromString([[
+AutoCavebotScrollBar < Panel
+  height: 28
+  margin-top: 3
+
+  UIWidget
+    id: text
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: parent.top
+    text-align: center
+    
+  HorizontalScrollBar
+    id: scroll
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: prev.bottom
+    margin-top: 3
+    minimum: 0
+    maximum: 100
+    step: 1
+]])
+
+local addScrollBar = function(id, title, min, max, defaultValue, dest)
+  local widget = UI.createWidget("AutoCavebotScrollBar", dest)
+  widget.scroll:setRange(min, max)
+
+  widget.scroll.onValueChange = function(scroll, value)
+    widget.text:setText(title .. value .. "%")
+    storage.autoCavebot[id] = value
+  end
+
+  widget.scroll:setValue(storage.autoCavebot[id] or defaultValue)
+  widget.scroll.onValueChange(widget.scroll, widget.scroll:getValue())
+end
+
+-- ================= STORAGE =================
+storage.autoCavebot = storage.autoCavebot or {
+  manaOff = 30,
+  manaOn = 50,
+  minPotions = 100,
+  manaPotionID = 238 -- ID editable
+}
+
+local config = storage.autoCavebot
+
+-- ================= UI =================
+UI.Label("Cavebot Mana Controller"):setColor("#00FFFF")
+UI.Separator()
+
+addScrollBar("manaOff", "Apagar Cavebot < ", 0, 100, config.manaOff)
+addScrollBar("manaOn", "Prender Cavebot > ", 0, 100, config.manaOn)
+
+UI.Separator()
+
+UI.Label("Minimo de Mana Potions")
+UI.TextEdit(tostring(config.minPotions), function(widget, text)
+  local v = tonumber(text)
+  if v then
+    config.minPotions = v
+  end
+end)
+
+UI.Separator()
+
+UI.Label("Mana Potion ID")
+UI.TextEdit(tostring(config.manaPotionID), function(widget, text)
+  local v = tonumber(text)
+  if v then
+    config.manaPotionID = v
+  end
+end)
+
+UI.Separator()
+
+-- ================= MACRO =================
+macro(500, "Cavebot Mana Controller", function()
+  local mana = (player:getMana() / player:getMaxMana()) * 100
+  local potions = itemAmount(config.manaPotionID)
+
+  -- Prioridad 1: pocas potions
+  if potions < config.minPotions then
+    if CaveBot.isOff() then
+      CaveBot.setOn()
+      modules.game_textmessage.displayGameMessage(
+        "Cavebot ON por pocas mana potions (" .. potions .. ")"
+      )
+    end
+
+    if TargetBot.isOn() then
+      TargetBot.setOff()
+      modules.game_textmessage.displayGameMessage(
+        "TargetBot OFF por refill"
+      )
+    end
+    return
+  end
+
+  -- Mana baja
+  if mana < config.manaOff and CaveBot.isOn() then
+    CaveBot.setOff()
+    modules.game_textmessage.displayGameMessage(
+      "Cavebot OFF por mana baja (" .. math.floor(mana) .. "%)"
+    )
+
+  -- Mana suficiente
+  elseif mana > config.manaOn and CaveBot.isOff() then
+    CaveBot.setOn()
+    modules.game_textmessage.displayGameMessage(
+      "Cavebot ON por mana suficiente (" .. math.floor(mana) .. "%)"
+    )
+  end
+end)
