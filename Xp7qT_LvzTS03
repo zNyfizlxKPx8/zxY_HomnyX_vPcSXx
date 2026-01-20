@@ -1276,3 +1276,310 @@ end)
 UI.Separator()
 
 end)
+
+-- SCRIPT: PushMax Wall (CON WALL) - INDEPENDIENTE
+setDefaultTab("Spell")
+
+local panelName = "pushmaxWall"
+local ui = setupUI([[
+Panel
+  height: 19
+
+  BotSwitch
+    id: title
+    anchors.top: parent.top
+    anchors.left: parent.left
+    text-align: center
+    width: 100
+    !text: tr('PUSHMAX WALL')
+
+  Button
+    id: push
+    anchors.top: prev.top
+    anchors.left: prev.right
+    anchors.right: parent.right
+    margin-left: 3
+    height: 17
+    text: Setup
+
+]])
+ui:setId(panelName)
+
+if not storage[panelName] then
+  storage[panelName] = {
+    enabled = true,
+    pushDelay = 1060,
+    pushMaxRuneId = 3188,
+    mwallBlockId = 2128,
+    pushMaxKey = "PageUp"
+  }
+end
+
+local configWall = storage[panelName]
+
+ui.title:setOn(configWall.enabled)
+ui.title.onClick = function(widget)
+  configWall.enabled = not configWall.enabled
+  widget:setOn(configWall.enabled)
+end
+
+ui.push.onClick = function(widget)
+  pushWindowWall:show()
+  pushWindowWall:raise()
+  pushWindowWall:focus()
+end
+
+rootWidget = g_ui.getRootWidget()
+if rootWidget then
+  pushWindowWall = UI.createWindow('PushMaxWindow', rootWidget)
+  pushWindowWall:hide()
+
+  pushWindowWall.closeButton.onClick = function(widget)
+    pushWindowWall:hide()
+  end
+
+  local updateDelayText = function()
+    pushWindowWall.delayText:setText("Push Delay: ".. configWall.pushDelay)
+  end
+  updateDelayText()
+  pushWindowWall.delay.onValueChange = function(scroll, value)
+    configWall.pushDelay = value
+    updateDelayText()
+  end
+  pushWindowWall.delay:setValue(configWall.pushDelay)
+
+  pushWindowWall.runeId.onItemChange = function(widget)
+    configWall.pushMaxRuneId = widget:getItemId()
+  end
+  pushWindowWall.runeId:setItemId(configWall.pushMaxRuneId)
+  pushWindowWall.mwallId.onItemChange = function(widget)
+    configWall.mwallBlockId = widget:getItemId()
+  end
+  pushWindowWall.mwallId:setItemId(configWall.mwallBlockId)
+
+  pushWindowWall.hotkey.onTextChange = function(widget, text)
+    configWall.pushMaxKey = text
+  end
+  pushWindowWall.hotkey:setText(configWall.pushMaxKey)
+end
+
+local fieldTable = {2118, 105, 2122}
+local cleanTileWall = nil
+local targetTileWall
+local pushTargetWall
+
+local resetDataWall = function()
+  for i, tile in pairs(g_map.getTiles(posz())) do
+    if tile:getText() == "TARGET" or tile:getText() == "DEST" or tile:getText() == "CLEAR" then
+      tile:setText('')
+    end
+  end
+  pushTargetWall = nil
+  targetTileWall = nil
+  cleanTileWall = nil
+end
+
+local getCreatureByIdWall = function(id)
+  for i, spec in ipairs(getSpectators()) do
+    if spec:getId() == id then
+      return spec
+    end
+  end
+  return false
+end
+
+local isNotOkWall = function(t,tile)
+  local tileItems = {}
+  for i, item in pairs(tile:getItems()) do
+    table.insert(tileItems, item:getId())
+  end
+  for i, field in ipairs(t) do
+    if table.find(tileItems, field) then
+      return true
+    end
+  end
+  return false
+end
+
+local isOkWall = function(a,b)
+  return getDistanceBetween(a,b) == 1
+end
+
+local holdWall = 0
+onKeyDown(function(keys)
+  if not configWall.enabled then return end
+  if keys ~= configWall.pushMaxKey then return end
+  holdWall = now
+  local tile = getTileUnderCursor()
+  if not tile then return end
+  if pushTargetWall and targetTileWall then
+    resetDataWall()
+    return
+  end
+  local creature = tile:getCreatures()[1]
+  if not pushTargetWall and creature then
+    pushTargetWall = creature
+    if pushTargetWall then
+      tile:setText('TARGET')
+      pushTargetWall:setMarked('#00FF00')
+    end
+  elseif not targetTileWall and pushTargetWall then
+    if pushTargetWall and getDistanceBetween(tile:getPosition(),pushTargetWall:getPosition()) ~= 1 then
+      resetDataWall()
+      return
+    else
+      tile:setText('DEST')
+      targetTileWall = tile
+    end
+  end
+end)
+
+onKeyPress(function(keys)
+  if not configWall.enabled then return end
+  if keys ~= configWall.pushMaxKey then return end
+  local tile = getTileUnderCursor()
+  if not tile then return end
+
+  if (holdWall - now) < -2500 then
+    if cleanTileWall and tile ~= cleanTileWall then
+      resetDataWall()
+    elseif not cleanTileWall then
+      cleanTileWall = tile
+      tile:setText("CLEAR")
+    end
+  end
+  holdWall = 0
+end)
+
+onCreaturePositionChange(function(creature, newPos, oldPos)
+  if not configWall.enabled then return end
+  if creature == player then
+    resetDataWall()
+  end
+  if not pushTargetWall or not targetTileWall then return end
+  if creature == pushTargetWall and newPos == targetTileWall then
+    resetDataWall()
+  end
+end)
+
+macro(50, function()
+  if not configWall.enabled then return end
+
+  local pushDelay = tonumber(configWall.pushDelay)
+  local rune = tonumber(configWall.pushMaxRuneId)
+  local customMwall = configWall.mwallBlockId
+
+  if cleanTileWall then
+    local tilePos = cleanTileWall:getPosition()
+    local pPos = player:getPosition()
+    if not isOkWall(tilePos, pPos) then
+      resetDataWall()
+      return
+    end
+
+    if not cleanTileWall:hasCreature() then return end
+    local tiles = getNearTiles(tilePos)
+    local destTile
+    local forbidden = {}
+    for i, tile in pairs(tiles) do
+      local minimapColor = g_map.getMinimapColor(tile:getPosition())
+      local stairs = (minimapColor >= 210 and minimapColor <= 213)
+      if stairs then
+        table.insert(forbidden, tile:getPosition())
+      end
+    end
+    for i, tile in pairs(tiles) do
+      local minimapColor = g_map.getMinimapColor(tile:getPosition())
+      local stairs = (minimapColor >= 210 and minimapColor <= 213)
+      if tile:isWalkable() and not isNotOkWall(fieldTable, tile) and not tile:hasCreature() and not stairs then
+        local tooClose = false
+        if #forbidden ~= 0 then
+          for i=1,#forbidden do
+            local pos = forbidden[i]
+            if isOkWall(pos, tile:getPosition()) then
+              tooClose = true
+              break
+            end
+          end
+        end
+        if not tooClose then
+          destTile = tile
+          break
+        end
+      end
+    end
+
+    if not destTile then return end
+    local parcel = cleanTileWall:getCreatures()[1]
+    if parcel then
+      test()
+      g_game.move(parcel,destTile:getPosition())
+      delay(2000)
+    end
+  else
+    if not pushTargetWall or not targetTileWall then return end
+    local tilePos = targetTileWall:getPosition()
+    local targetPos = pushTargetWall:getPosition()
+    if not isOkWall(tilePos,targetPos) then return end
+
+    local tileOfTarget = g_map.getTile(targetPos)
+
+    if not targetTileWall:isWalkable() then
+      local topThing = targetTileWall:getTopUseThing():getId()
+      if topThing == 2129 or topThing == 2130 or topThing == customMwall then
+        if targetTileWall:getTimer() < pushDelay+500 then
+          vBot.isUsing = true
+          schedule(pushDelay+700, function()
+            vBot.isUsing = false
+          end)
+        end
+        if targetTileWall:getTimer() > pushDelay then
+          return
+        end
+      else
+        return resetDataWall()
+      end
+    end
+
+    if not tileOfTarget:getTopUseThing():isNotMoveable() and targetTileWall:getTimer() < pushDelay+500 then
+      return useWith(rune, pushTargetWall)
+    end
+    if isNotOkWall(fieldTable, targetTileWall) then
+      if targetTileWall:canShoot() then
+        return useWith(3148, targetTileWall:getTopUseThing())
+      else
+        return
+      end
+    end
+    g_game.move(pushTargetWall,tilePos)
+    delay(2000)
+  end
+end)
+
+local mwID = 3180
+local mwExhaust = 1000
+local lastWallTime = 0
+local prePushWall = nil
+
+onCreaturePositionChange(function(creature, newPos, oldPos)
+  if not configWall.enabled then return end
+  if creature ~= pushTargetWall then return end
+  prePushWall = oldPos
+end)
+
+onCreaturePositionChange(function(creature, newPos, oldPos)
+  if not configWall.enabled then return end
+  if creature ~= pushTargetWall then return end
+  if not prePushWall or now - lastWallTime < mwExhaust then return end
+
+  local tile = g_map.getTile(prePushWall)
+  if not tile then return end
+
+  local topId = tile:getTopUseThing():getId()
+  local alreadyField = table.find(fieldTable, topId) or topId == configWall.mwallBlockId
+
+  if not alreadyField then
+    useWith(mwID, tile:getTopUseThing())
+    lastWallTime = now
+  end
+end)
