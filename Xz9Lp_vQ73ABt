@@ -1845,3 +1845,109 @@ function sellLoot()
 end
 
 end)
+
+-- Task Tracked
+setDefaultTab('Target')
+local labelmonster = UI.Label("*~Seguimiento De Task~*")
+labelmonster:setColor("#00FFFF") -- celeste
+--~~Script by Undersky~~--
+-- Default values
+local defaultMonsterName = "Hydra"
+local defaultKillThreshold = 650
+local defaultPlayerNameToPM = "PlayerName"
+ 
+gTaskMainLabel = UI.Label("Noxious Task Tracker")
+gTaskMainLabel:setFont('verdana-11px-rounded')
+gTaskMainLabel:setColor('#ffffcc')
+gTaskMainLabel:setBackgroundColor('#00000099')
+ 
+if not storage.gTaskkills then
+    storage.gTaskkills = 0
+end
+gTaskkills = storage.gTaskkills
+ 
+if not storage.monsterName then
+    storage.monsterName = "Hydra"
+end
+ 
+ 
+gTaskkillCountLabel = UI.Label(storage.monsterName .. " Kills: " .. gTaskkills)
+gTaskkillCountLabel:setColor('green')
+gTaskkillCountLabel:setFont('verdana-11px-rounded')
+gTaskkillCountLabel:setBackgroundColor('#00000099')
+ 
+gTaskMonsterTextEdit = addTextEdit("Monster Name", storage.monsterName or defaultMonsterName, function(widget, text)
+    storage.monsterName = text
+    gTaskkillCountLabel:setText(text .. " Kills: " .. gTaskkills)
+end):setTooltip("Enter the name of the monster to track.")
+ 
+ 
+UI.Separator()
+ 
+ 
+gTaskGATask = macro(1000, "Task Tracker", function()
+    local monsterName = storage.monsterName or defaultMonsterName
+    gTaskkillCountLabel:setText(monsterName .. " Kills: " .. gTaskkills)
+end)
+--~~Script by Undersky~~--
+-- Reset gTaskkills function
+function gTaskresetgTaskkills()
+    gTaskkills = 0
+    storage.gTaskkills = gTaskkills
+    print("Kill count has been reset.")
+    gTaskkillCountLabel:setText(storage.monsterName .. " Kills: " .. gTaskkills)
+end
+ 
+gTaskresetButton = UI.Button("Reset Counter", function()
+    gTaskresetgTaskkills()
+end)
+gTaskresetButton:setColor('#d81e1e')
+gTaskresetButton:setFont('verdana-11px-rounded')
+gTaskresetButton:setBackgroundColor('#00000099')
+ 
+UI.Separator()
+ 
+--track kills via noxious loot message
+onTextMessage(function(mode, text)
+    if gTaskGATask.isOff() then return end
+    local monsterName = storage.monsterName or defaultMonsterName
+    if mode == 43 and string.lower(text):find(string.lower("loot of a " .. monsterName)) then
+        gTaskkills = gTaskkills + 1
+        storage.gTaskkills = gTaskkills
+        print("You have killed " .. gTaskkills .. " " .. monsterName .. "(s).")
+        gTaskkillCountLabel:setText(monsterName .. " Kills: " .. gTaskkills)
+    end
+end)
+
+gTaskkillCountLabelForPM = UI.Label("Kill Count for PM:")
+gTaskkillCountLabelForPM:setFont('verdana-11px-rounded')
+gTaskkillCountLabelForPM:setColor('#ffd700')
+gTaskkillCountLabelForPM:setBackgroundColor('#00000099')
+ 
+ 
+gTaskKillThresholdTextEdit = addTextEdit("Kill Threshold", storage.killThreshold or defaultKillThreshold, function(widget, text)
+    local threshold = tonumber(text)
+    if threshold then
+        storage.killThreshold = threshold
+    end
+end):setTooltip("Enter the kill count threshold to trigger Private Message.")
+ 
+gTasknameToPMLabel = UI.Label("Name to PM:")
+gTasknameToPMLabel:setFont('verdana-11px-rounded')
+gTasknameToPMLabel:setColor('#00FFFF')
+gTasknameToPMLabel:setBackgroundColor('#00000099')
+ 
+ 
+gTasknameToPMTextEdit = addTextEdit("Player Name to PM", storage.playerNameToPM or defaultPlayerNameToPM, function(widget, text)
+    storage.playerNameToPM = text
+end):setTooltip("Enter the player name to send the PM when kill threshold is reached.")
+
+gTaskPMTask = macro(1500, "PM on Complete", function()
+    local killThreshold = tonumber(storage.killThreshold or defaultKillThreshold)
+    local playerName = storage.playerNameToPM or defaultPlayerNameToPM
+    local monsterName = storage.monsterName or defaultMonsterName
+    if gTaskkills >= killThreshold then
+        sayPrivate(playerName, "Task completa: ya matamos " .. gTaskkills .. " " .. monsterName .. "s, ya puedes pasar a reportar")
+        delay(30000)
+    end
+end)
