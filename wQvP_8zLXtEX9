@@ -304,22 +304,39 @@ for _, scripts in ipairs({storage.ingame_macros, storage.ingame_hotkeys}) do
 end
 
 -- ===============================
--- SCRIPT CREADO BY UNDERSKY
+-- SCRIPT NPC TRADE BY UNDERSKY
 -- ===============================
 
--- Cargar NPCs guardados o usar lista por defecto
+-- ==========================
+-- LISTA DE NPCs COMERCIANTES PERSONALIZADA
+-- ==========================
+
 local tradeNpcs = storage.tradeNpcs or {
   "Rashid", "Yasir", "Grizzly Adams", "Znozel", "Esrik",
   "Captain Seahorse", "Black Bert", "Willard", "Sandra",
-  "Dario", "Eryn", "Flint", "Isimov", "Lorek", "Sam", "[Magic] Xodet"
+  "Dario", "Eryn", "Flint", "Isimov", "Lorek", "Sam", 
+  "[Magic] Xodet","[Magic] Malah","[Magic] Magicka","[Loot] Item Dealer","[Equip] turvy","[Misc] Benjamin",
+  "[Equip] Sam","[Tools] Gorn","[Food] Frodo","[Jewelry] Hanna","[Potions] Lily",
+  "[Equip] Obi","[Tanner] Tom","[Equip] Lee'Delle","[Equip] Maun","[Magic] Rachel",
+  "Sarina","[Food] Imalas","Cornelia","[Food] Lector","Perac","[Furniture] Nydala",
+  "Rowenna","[Magic] Sandra","[Food] Luna","[Magic] Thomas","[Magic] Alexander",
+  "[Furniture] Edvard","[Jewelry] Iwan","Rudolph","Beatrice","[Equip] Willard",
+  "[Bank] Ebenizer","[Food] Bonifaciusr","[Magic] Frederik","Ray","[Jewelry] Gail",
+  "[Equip] Brengus","Perod","Zaidal","[Magic] Tandros","[Magic] Frans","[Magic] Digger",
+  "Odemara","[Jewelry] Carina","[Flowers] Rose","[Food] Rodney","[Food] Livielle",
+  "Nelliem","Chephan","[Music] Julian","Chephan","Shiantis","Lurik","[Magic] Nelly",
+  "[Jewelry/Bank] Jessica","[Jewelry] Oiriz","Gree Dee","[Magic] Chuckles","Vincent","Ahmet",
+  "[Equip] Memech","[Jewelry] Tesha","[Food] Jezzara","[Magic] Fenech","[Magic] Mehkesh",
+  "[Equip] Azil","Habdel","Edoch","[Jewelry] Ishina","[Food] Omur","Halif","[Magic] Asima",
+  "Atrad","[Magic] Rabaz","[Food] Swolt","Murim","[Addon] Item Exchanger","[Addons] Jean",
+  "[Item Renamer] Wright","[Magic] Mana Shop"
 }
-
 -- ===============================
 -- VENTANA PARA AGREGAR NUEVOS NPCs
 -- ===============================
 g_ui.loadUIFromString([[
 AddNpcWindow < MainWindow
-  size: 140 132
+  size: 140 115
 
   Label
     id: addNpcTitle
@@ -328,7 +345,7 @@ AddNpcWindow < MainWindow
     color: #00ffff
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
-    margin-top: -24 -- esto mueve texto
+    margin-top: -30
 
   TextEdit
     id: npcNameInput
@@ -426,48 +443,50 @@ macro(50, function()
   end
 end)
 
+
 -- ==========================
--- VENTANA AUTO DE TRADE/HI
+-- UI DE INTERACCIÓN CON NPCs
 -- ==========================
+
 g_ui.loadUIFromString([[
-TradeWindow < MainWindow
-  size: 140 132
+NpcTradeWindow < MainWindow
+  size: 140 117
 
   Label
-    id: tradeTitle
+    id: npcTradeTitle
     text: NPC Comerciante
     font: verdana-11px-rounded
     color: #00ffff
     anchors.top: parent.top
     anchors.horizontalCenter: parent.horizontalCenter
-    margin-top: -24 -- esto mueve el texto
+    margin-top: -23
 
   Panel
-    id: tradeOptions
-    anchors.top: tradeTitle.bottom
+    id: npcTradeOptions
+    anchors.top: npcTradeTitle.bottom
     anchors.left: parent.left
     anchors.right: parent.right
-    anchors.bottom: tradeClose.top
+    anchors.bottom: npcTradeClose.top
     margin-top: 10
     layout:
       type: verticalBox
 
   Button
-    id: tradeClose
+    id: npcTradeClose
     text: Cerrar
     font: cipsoftFont
     anchors.bottom: parent.bottom
     anchors.right: parent.right
     margin-right: -8
-    margin-bottom: -10
+    margin-bottom: -8
     size: 60 23
 ]])
 
-local tradeWindow = UI.createWindow('TradeWindow', rootWidget)
-tradeWindow:hide()
+local npcTradeWindow = UI.createWindow('NpcTradeWindow', rootWidget)
+npcTradeWindow:hide()
 
--- Botones: Saludar y Trade
-local hiButton = g_ui.createWidget("Button", tradeWindow.tradeOptions)
+-- Botón "Saludar"
+local hiButton = g_ui.createWidget("Button", npcTradeWindow.npcTradeOptions)
 hiButton:setText("Saludar")
 hiButton:setFont("cipsoftFont")
 hiButton:setWidth(120)
@@ -475,23 +494,26 @@ hiButton.onClick = function()
   say("hi")
 end
 
-local tradeButton = g_ui.createWidget("Button", tradeWindow.tradeOptions)
+-- Botón "Trade"
+local tradeButton = g_ui.createWidget("Button", npcTradeWindow.npcTradeOptions)
 tradeButton:setText("Trade")
 tradeButton:setFont("cipsoftFont")
 tradeButton:setWidth(120)
-tradeButton:setMarginTop(4) -- <-- separacion de 4 pixeles respecto al boton "Saludar"
+tradeButton:setMarginTop(4)
 tradeButton.onClick = function()
-  NPC.say("trade")
+  NPC.say("trade") -- a veces esto debe ser 'say("trade")' según cliente
 end
 
--- Boton cerrar ventana de trade
-tradeWindow.tradeClose.onClick = function()
-  tradeWindow:hide()
+-- Cerrar ventana de Trade
+npcTradeWindow.npcTradeClose.onClick = function()
+  npcTradeWindow:hide()
 end
 
+
 -- ==========================
--- DETECCION AUTOMATICA NPCs
+-- DETECCIÓN AUTOMÁTICA DE NPCs
 -- ==========================
+
 local currentNpc = nil
 local isTradeVisible = false
 
@@ -507,55 +529,60 @@ macro(200, function()
 
   if npcFound and not isTradeVisible then
     currentNpc = npcFound:getName()
-    tradeWindow:show()
-    tradeWindow:raise()
-    tradeWindow:focus()
+    npcTradeWindow:show()
+    npcTradeWindow:raise()
     isTradeVisible = true
   elseif not npcFound and isTradeVisible then
-    tradeWindow:hide()
+    npcTradeWindow:hide()
     isTradeVisible = false
     currentNpc = nil
   end
 end)
 
--- Animacion de brillo para el titulo
-local titleLabel = tradeWindow.tradeTitle
-local text = "NPC Comerciante"
-local glowPosition = 1
-local glowDirection = 1
+-- ==========================
+-- ANIMACIÓN DE TÍTULO BRILLANTE
+-- ==========================
+
+local titleLabelAdd = addNpcWindow.addNpcTitle
+local textAdd = "Agregar NPC"
+local glowPosAdd = 1
+local glowDirAdd = 1
 
 macro(50, function()
-  local numChars = #text
-  local glowRange = math.max(1, math.floor(numChars / 10))
-  local coloredText = {}
-
-  for i = 1, numChars do
-    local char = text:sub(i, i)
-    local color = "#00FFFF" -- Color base
-    if math.abs(i - glowPosition) <= glowRange then
-      color = "#BFFFFF" -- Color de brillo
-    end
-    table.insert(coloredText, char)
-    table.insert(coloredText, color)
+  local colored = {}
+  for i = 1, #textAdd do
+    local c = textAdd:sub(i,i)
+    local color = "#00FFFF"
+    if math.abs(i - glowPosAdd) <= 1 then color = "#BFFFFF" end
+    table.insert(colored, c)
+    table.insert(colored, color)
   end
-
-  glowPosition = glowPosition + glowDirection
-  if glowPosition > numChars then
-    glowPosition = numChars - 1
-    glowDirection = -1
-  elseif glowPosition < 1 then
-    glowPosition = 2
-    glowDirection = 1
-  end
-
-  if titleLabel then
-    titleLabel:setColoredText(coloredText)
-  end
+  glowPosAdd = glowPosAdd + glowDirAdd
+  if glowPosAdd > #textAdd then glowPosAdd = #textAdd - 1 glowDirAdd = -1
+  elseif glowPosAdd < 1 then glowPosAdd = 2 glowDirAdd = 1 end
+  titleLabelAdd:setColoredText(colored)
 end)
 
--- ===============================
--- SCRIPT CREADO BY UNDERSKY
--- ===============================
+local titleLabelTrade = npcTradeWindow.npcTradeTitle
+local textTrade = "NPC Comerciante"
+local glowPosTrade = 1
+local glowDirTrade = 1
+
+macro(50, function()
+  local colored = {}
+  for i = 1, #textTrade do
+    local c = textTrade:sub(i,i)
+    local color = "#00FFFF"
+    if math.abs(i - glowPosTrade) <= 1 then color = "#BFFFFF" end
+    table.insert(colored, c)
+    table.insert(colored, color)
+  end
+  glowPosTrade = glowPosTrade + glowDirTrade
+  if glowPosTrade > #textTrade then glowPosTrade = #textTrade - 1 glowDirTrade = -1
+  elseif glowPosTrade < 1 then glowPosTrade = 2 glowDirTrade = 1 end
+  titleLabelTrade:setColoredText(colored)
+end)
+
 
 -- Girar Script creado por Madgenius
 local actionUI = setupUI([[
