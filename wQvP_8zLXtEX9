@@ -315,7 +315,7 @@ local tradeNpcs = storage.tradeNpcs or {
   "Rashid", "Yasir", "Grizzly Adams", "Znozel", "Esrik",
   "Captain Seahorse", "Black Bert", "Willard", "Sandra",
   "Dario", "Eryn", "Flint", "Isimov", "Lorek", "Sam", 
-  "[Magic] Xodet","[Magic] Malah","[Magic] Magicka","[Loot] Item Dealer","[Equip] turvy","[Misc] Benjamin",
+  "[Magic] Xodet","[Magic] Malah","[Magic] Magicka","[Misc] Benjamin",
   "[Equip] Sam","[Tools] Gorn","[Food] Frodo","[Jewelry] Hanna","[Potions] Lily",
   "[Equip] Obi","[Tanner] Tom","[Equip] Lee'Delle","[Equip] Maun","[Magic] Rachel",
   "Sarina","[Food] Imalas","Cornelia","[Food] Lector","Perac","[Furniture] Nydala",
@@ -328,7 +328,7 @@ local tradeNpcs = storage.tradeNpcs or {
   "[Jewelry/Bank] Jessica","[Jewelry] Oiriz","Gree Dee","[Magic] Chuckles","Vincent","Ahmet",
   "[Equip] Memech","[Jewelry] Tesha","[Food] Jezzara","[Magic] Fenech","[Magic] Mehkesh",
   "[Equip] Azil","Habdel","Edoch","[Jewelry] Ishina","[Food] Omur","Halif","[Magic] Asima",
-  "Atrad","[Magic] Rabaz","[Food] Swolt","Murim","[Addon] Item Exchanger","[Addons] Jean",
+  "Atrad","[Magic] Rabaz","[Food] Swolt","Murim","[Addons] Jean",
   "[Item Renamer] Wright","[Magic] Mana Shop"
 }
 -- ===============================
