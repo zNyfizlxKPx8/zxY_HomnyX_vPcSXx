@@ -246,49 +246,88 @@ end
 checkAndLoad(function()
 
 setDefaultTab("Cave")
--- Script By Undersky   Run Pk Deluxe
+-- Este macro si te ataca un player cuando estes bot o si ve algun PK, se va a los labels que le asignes al cavebot ya sea Run1 hasta Run4 Y Pz
 
-UI.Label("Agrega Hasta 4 Labels Run1 a Run4 & Pz")
+-- ==============================
+-- Run PK Deluxe PRO Edition
+-- Script By Undersky
+-- ==============================
+
+local labelrunpz = UI.Label("Run PK| Auto PZ + Reset")
+labelrunpz:setColor("#00FFFF") -- celeste
 
 local etiquetas = {
-    {nombre = "Run1", activo = false},
-    {nombre = "Run2", activo = false},
-    {nombre = "Run3", activo = false},
-    {nombre = "Run4", activo = false},
-    {nombre = "Pz", activo = false}
+    "Run1",
+    "Run2",
+    "Run3",
+    "Run4",
+    "Pz"
 }
 
 local indiceActual = 1
+local huyendo = false
+
+-- ==============================
+-- FUNCIONES
+-- ==============================
 
 local function playersinScreenWithSkull()
     for _, spec in ipairs(getSpectators()) do
-        if spec ~= player and spec:isPlayer() and spec:getSkull() == 3 then
+        if spec:isPlayer() and spec ~= player and spec:getSkull() == 3 then
             return true
         end
     end
     return false
 end
 
-macro(1000, "Ir a Run/Pz", function()
+local function resetRunPK(msg)
+    huyendo = false
+    indiceActual = 1
+
+    if msg then
+        modules.game_textmessage.displayGameMessage(msg)
+    end
+end
+
+-- ==============================
+-- MACRO PRINCIPAL
+-- ==============================
+
+macro(500, "Ir a Run/Pz", function()
+    if huyendo then return end
+
     if playersinScreenWithSkull() then
-        local etiquetaActual = etiquetas[indiceActual]
-        if not etiquetaActual.activo then
-            modules.game_textmessage.displayGameMessage("Alerta PK! Moviendome A Zona Segura.") -- <<< Mensaje en consola interna
-            CaveBot.gotoLabel(etiquetaActual.nombre)
-            etiquetaActual.activo = true
-            indiceActual = indiceActual + 1
-            if indiceActual > #etiquetas then
-                indiceActual = 1
-            end
-        end
-    else
-        -- Si ya no hay player con skull, reseteamos todo
-        for _, etiqueta in ipairs(etiquetas) do
-            etiqueta.activo = false
-        end
-        indiceActual = 1
+        local label = etiquetas[indiceActual]
+
+        modules.game_textmessage.displayGameMessage(
+            "ALERTA PK! Corriendo a "..label.." (Target OFF)"
+        )
+
+        TargetBot.setOff()
+        CaveBot.gotoLabel(label)
+
+        huyendo = true
     end
 end)
+
+-- ==============================
+-- RESET AUTOMATICO EN PZ
+-- ==============================
+
+onPlayerPositionChange(function()
+    if isInPz() and huyendo then
+        resetRunPK("Estas en PZ. Run PK reactivado.")
+    end
+end)
+
+-- ==============================
+-- BOTON MANUAL RESET
+-- ==============================
+
+UI.Button("Reset Run PK", function()
+    resetRunPK("Run PK reseteado.")
+end)
+UI.Separator()
 
 -- Alejar de players
 macro(500, "Alejar De Players", function()
