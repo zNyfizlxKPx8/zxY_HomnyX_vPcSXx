@@ -2883,7 +2883,7 @@ local doorContainer = UI.Container(function(widget, items)
   doorId = properTable(storage.doorIds)
 end, tabName)
 
-doorContainer:setHeight(35)
+doorContainer:setHeight(55)
 doorContainer:setItems(storage.doorIds)
 doorId = properTable(storage.doorIds)
 
