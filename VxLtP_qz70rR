@@ -293,7 +293,7 @@ end
 -- MACRO PRINCIPAL
 -- ==============================
 
-macro(500, "Ir a Run/Pz", function()
+runPzMacro = macro(500, "Ir a Run/Pz", function()
     if huyendo then return end
 
     if playersinScreenWithSkull() then
