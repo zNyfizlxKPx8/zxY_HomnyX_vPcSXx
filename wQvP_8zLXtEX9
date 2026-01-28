@@ -1697,17 +1697,19 @@ local holdtMacro = macro(1000, "Hold Target", function()
   end
 end)
 
--- HoldMw
-local hold = 0
-local candidates = {}
-local shouldHold = false
+-- ===============================
+-- HOLD MW / HOLD WG
+-- Macro normal (ToolsV2)
+-- ===============================
 
--- Constants for item IDs
+local candidates = {}
+
+-- IDs
 local HOLD_MW_RUNE = 3180
 local HOLD_WG_RUNE = 3156
 local HOLD_ITEM_ID = 2128
 
--- Function to get the rune ID based on the tile text
+-- Obtener runa según texto
 local function getRuneByText(text)
   if text == "HOLD MW" then
     return HOLD_MW_RUNE
@@ -1717,32 +1719,49 @@ local function getRuneByText(text)
   return nil
 end
 
-local holdMwIcon = macro(300, "HoldMwall", function(m)
-  shouldHold = true
-  schedule(500, function()
-    if m.isOn() then return end
-    shouldHold = false
-    candidates = {}
-    for _, t in ipairs(g_map.getTiles(posz())) do
-      t:setText("")
+-- ===============================
+-- LIMPIAR MARCAS
+-- ===============================
+local function clearHoldMarks()
+  for _, tile in ipairs(g_map.getTiles(posz())) do
+    if tile:getText() == "HOLD MW" or tile:getText() == "HOLD WG" then
+      tile:setText("")
     end
-  end)
-end)
+  end
+  candidates = {}
+end
 
-local m = macro(500, function()
+-- ===============================
+-- MACRO PRINCIPAL
+-- ===============================
+local holdMacro = macro(500, "Hold Mw", function()
   if #candidates == 0 then return end
+
   for i = #candidates, 1, -1 do
     local pos = candidates[i]
     local tile = g_map.getTile(pos)
-    if tile then
-      if tile:getText():len() == 0 then 
+
+    if not tile or tile:getText():len() == 0 then
+      table.remove(candidates, i)
+    else
+      local runeId = getRuneByText(tile:getText())
+      if not runeId then
         table.remove(candidates, i)
       else
-        local rune = getRuneByText(tile:getText())
-        if tile:canShoot() and not isInPz() and tile:isWalkable() and tile:getTopUseThing():getId() ~= 2130 then
-          if math.abs(player:getPosition().x - tile:getPosition().x) < 8 and math.abs(player:getPosition().y - tile:getPosition().y) < 6 then
-            rune = findItem(rune)            
-            return useWith(rune, tile:getTopUseThing())
+        if tile:canShoot()
+          and not isInPz()
+          and tile:isWalkable()
+          and tile:getTopUseThing()
+          and tile:getTopUseThing():getId() ~= 2130 then
+
+          local p = player:getPosition()
+          local t = tile:getPosition()
+
+          if math.abs(p.x - t.x) < 8 and math.abs(p.y - t.y) < 6 then
+            local rune = findItem(runeId)
+            if rune then
+              return useWith(rune, tile:getTopUseThing())
+            end
           end
         end
       end
@@ -1750,58 +1769,70 @@ local m = macro(500, function()
   end
 end)
 
-onRemoveThing(function(tile, thing)  
+-- ===============================
+-- DETECTAR CUANDO SE APAGA (LIMPIEZA)
+-- ===============================
+macro(300, function()
+  if not holdMacro:isOn() and #candidates > 0 then
+    clearHoldMarks()
+  end
+end)
+
+-- ===============================
+-- CUANDO LA WALL DESAPARECE
+-- ===============================
+onRemoveThing(function(tile, thing)
+  if not holdMacro:isOn() then return end
   if thing:getId() ~= HOLD_ITEM_ID then return end
-  if tile:getText():find("HOLD") then
-    -- Solo agrega a los candidatos si no esta vacio el texto y no esta en la lista ya
-    if not table.contains(candidates, tile:getPosition()) then
-      table.insert(candidates, tile:getPosition())
-    end
-    local rune = getRuneByText(tile:getText())
-    if math.abs(player:getPosition().x - tile:getPosition().x) < 8 and math.abs(player:getPosition().y - tile:getPosition().y) < 6 then
-      rune = findItem(rune)
-      return useWith(rune, tile:getTopUseThing())
+  if not tile:getText():find("HOLD") then return end
+
+  if not table.contains(candidates, tile:getPosition()) then
+    table.insert(candidates, tile:getPosition())
+  end
+
+  local runeId = getRuneByText(tile:getText())
+  if not runeId then return end
+
+  local p = player:getPosition()
+  local t = tile:getPosition()
+
+  if math.abs(p.x - t.x) < 8 and math.abs(p.y - t.y) < 6 then
+    local rune = findItem(runeId)
+    if rune then
+      useWith(rune, tile:getTopUseThing())
     end
   end
 end)
 
-onAddThing(function(tile, thing)  
-  if m.isOff() then return end
+-- ===============================
+-- CUANDO ENTRA UNA WALL
+-- ===============================
+onAddThing(function(tile, thing)
+  if not holdMacro:isOn() then return end
   if thing:getId() ~= HOLD_ITEM_ID then return end
-  if tile:getText():len() > 0 then
-    table.remove(candidates, table.find(candidates, tile))
+
+  local index = table.find(candidates, tile:getPosition())
+  if index then
+    table.remove(candidates, index)
   end
 end)
 
-onUseWith(function(pos, itemId, target, subType)
-  if not shouldHold or (itemId ~= HOLD_MW_RUNE and itemId ~= HOLD_WG_RUNE) then return end
-  
-  hold = now    
+-- ===============================
+-- MARCAR TILE AL USAR RUNA
+-- ===============================
+onUseWith(function(pos, itemId, target)
+  if not holdMacro:isOn() then return end
+  if itemId ~= HOLD_MW_RUNE and itemId ~= HOLD_WG_RUNE then return end
+
   local tile = g_map.getTile(target:getPosition())
   if not tile then return end
 
-  if itemId == HOLD_MW_RUNE then
-    tile:setText("HOLD MW")
-  else
-    tile:setText("HOLD WG")
+  tile:setText(itemId == HOLD_MW_RUNE and "HOLD MW" or "HOLD WG")
+
+  if not table.contains(candidates, tile:getPosition()) then
+    table.insert(candidates, tile:getPosition())
   end
-  table.insert(candidates, tile:getPosition()) 
 end)
-
--- Funcion para borrar las marcas "HOLD MW" y "HOLD WG"
-local function clearHoldMarks()
-  for _, t in ipairs(g_map.getTiles(posz())) do
-    if t:getText() == "HOLD MW" or t:getText() == "HOLD WG" then
-      t:setText("")  -- Elimina la marca
-    end
-  end
-  candidates = {}  -- Vaciar la lista de candidatos
-end
-
-  -- Si el macro se apaga, borrar las marcas "HOLD MW" y "HOLD WG"
-  if not isOn then
-    clearHoldMarks()
-  end
 
 -- Auto Suelta Flores o Parcels
 local itemIds = {140,2988,2985,2984,2983,2982,2981,3504}
@@ -1911,7 +1942,7 @@ end)
 -- Agregar macros a la lista
 table.insert(listaMacros, follow)
 table.insert(listaMacros, holdtMacro)
-table.insert(listaMacros, holdMwIcon)
+table.insert(listaMacros, holdMacro)
 table.insert(listaMacros, dropitem)
 table.insert(listaMacros, fuego)
 table.insert(listaMacros, lastexMacro)
@@ -1937,7 +1968,7 @@ for _, mac in ipairs(listaMacros) do
         checkbox:setTooltip("Mantiene el ataque al player que estes atacando.")
     end
    -- Tooltip para "holdMwall"
-    if mac.switch:getText() == "HoldMwall" then
+    if mac.switch:getText() == "Hold Mw" then
         checkbox:setTooltip("Mantiene las Magic wall o Tera, creando una marca.")
     end
      -- Tooltip para "dropitem"
