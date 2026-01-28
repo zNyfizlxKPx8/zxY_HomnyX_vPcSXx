@@ -2166,20 +2166,17 @@ local function distance(pos1, pos2)
 end
 
 local function lastTurnDir()
-    local target = getCreatureByName(storage.followLeader)
+    local targetZ = getCreatureByName(storage.followLeader)
+    if not targetZ then return end
+
     local pdir = player:getDirection()
-  if target then
-        local tdir = target:getDirection()
-        toChangeDir[tdir] = tdir
-    end
-    local p = toChangeDir[tdir]
-    if not p then
-        return
-    end
-    if targetZ:getDirection() ~= player:getDirection() then
-        turn(pdir)
+    local tdir = targetZ:getDirection()
+
+    if tdir ~= pdir then
+        turn(tdir)
     end
 end
+
 
 local function turnDir()
     local targetZ = getCreatureByName(storage.followLeader)
@@ -2196,57 +2193,46 @@ local function turnDir()
     end
 end
 
+
 local function WallDetect()
-
     local targetZ = getCreatureByName(storage.followLeader)
-    local position = player:getPosition()
 
-  for _, n in ipairs(getSpectators(true)) do
+    for _, n in ipairs(getSpectators(true)) do
         if n:getName() == storage.followLeader then
             targetZ = n
+            break
         end
     end
-    if not targetZ then return end
 
-    local targetZ = getCreatureByName(storage.followLeader)
-    local position = player:getPosition()
-
-  for _, n in ipairs(getSpectators(true)) do
-        if n:getName() == storage.followLeader then
-            targetZ = n
-        end
+    if not targetZ or not targetZ:getPosition() then
+        return
     end
-    if not targetZ then return end
-    local targetDir = targetZ:getDirection()
-    if targetZ and targetZ:getPosition().z ~= posz() and targetZ:getDirection() ~= player:getDirection() then
+
+    -- Guardar ultima direccion conocida si cambia de piso
+    if targetZ:getPosition().z ~= posz() then
         lastKnownDirection = targetZ:getDirection()
     end
-    local tile
-    if lastKnownDirection == 0 then -- north
-        turn(lastKnownDirection)
-        position.y = position.y - 1
-        tile = g_map.getTile(position)
-    elseif lastKnownDirection == 1 then -- east
-        turn(lastKnownDirection)
-        position.x = position.x + 1
-        tile = g_map.getTile(position)
-    elseif lastKnownDirection == 2 then -- south
-        turn(lastKnownDirection)
-        position.y = position.y + 1
-        tile = g_map.getTile(position)
-    elseif lastKnownDirection == 3 then -- west
-        turn(lastKnownDirection)
-        position.x = position.x - 1
-        tile = g_map.getTile(position)
+
+    -- Si aun no hay direccion conocida, salir sin romper nada
+    if lastKnownDirection == nil then
+        return
     end
-  
-    if targetZ:getPosition().z == posz() then return true
-    elseif targetZ:getPosition().z - posz() >= 1 then say('exani hur "down') -- jump "down"
-            delay(math.random(100, 400))
-    elseif targetZ:getPosition().z - posz() <= -1 then say('exani hur "up') -- jump "up"
-            delay(math.random(100, 400))
+
+    -- Girar hacia la ultima direccion
+    turn(lastKnownDirection)
+
+    -- Subir o bajar pisos
+    local diffZ = targetZ:getPosition().z - posz()
+
+    if diffZ >= 1 then
+        say('exani hur "down')
+        delay(math.random(100, 400))
+    elseif diffZ <= -1 then
+        say('exani hur "up')
+        delay(math.random(100, 400))
     end
 end
+
 
 local function executeClosest(possibilities)
     local closest
@@ -2344,7 +2330,7 @@ followChange = macro(200, "Cambiar Follow", function() end)
 
 local toFollowPos = {}
 
-AdvancedFollow = macro(20, "Follow Agresivo", "", function(macro)
+AdvancedFollow = macro(50, "Follow Agresivo", "", function(macro)
 if followMacro.isOn() then followMacro.setOff() end
     local target = getCreatureByName(storage.followLeader)
     local pPos = player:getPosition()
@@ -2372,7 +2358,7 @@ if followMacro.isOn() then followMacro.setOff() end
     if targetMissing() and lastKnownPosition and possibleChangers == nil then
         WallDetect()
     end
-    if not targetMissing() and getDistanceBetween(pos(), target:getPosition()) >= 3 then
+    if target and not targetMissing() and getDistanceBetween(pos(), target:getPosition()) >= 3 then
      for _, NEWtile in pairs(g_map.getTiles(posz())) do
       if distanceFromPlayer(NEWtile:getPosition()) == 1 then
        if table.find(openDoors, NEWtile:getTopUseThing():getId()) then
