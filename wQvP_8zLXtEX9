@@ -3080,7 +3080,7 @@ macro(600, "Conteo de jugadores", function(macro)
 
     if not jugadoresWidget["widget"] then
         jugadoresWidget["widget"] = setupUI(widgetConfig, g_ui.getRootWidget())
-        jugadoresWidget["widget"]:setPosition(storage.posicionWidgetJugadores["widget"] or { x = 602, y = 1 })
+        jugadoresWidget["widget"]:setPosition(storage.posicionWidgetJugadores["widget"] or { x = 730, y = 30 })
         attachWidgetCallbacks("widget")
     end
 
