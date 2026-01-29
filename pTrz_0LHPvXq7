@@ -292,7 +292,7 @@ end
 
 -- Crear 2 widgets de curación
 for _, healingInfo in ipairs({storage.healing1, storage.healing2}) do
-  local healingmacro = macro(600, function()
+  local healingmacro = macro(500, function()
     local hp = player:getHealthPercent()
     local mana = player:getMana()
 
@@ -300,9 +300,8 @@ for _, healingInfo in ipairs({storage.healing1, storage.healing2}) do
     local spellText = healingInfo.text:lower()
     local spellCost = ({
       ["exura"] = 20,
-      ["exura vita"] = 160,
       ["exura gran"] = 70,
-      ["exura sio"] = 140
+      ["exura vita"] = 160
     })[spellText] or 0
 
     -- Solo lanzar el hechizo si tienes suficiente mana
@@ -342,7 +341,7 @@ if type(storage.manaitem2) ~= "table" then
 end
 
 for i, healingInfo in ipairs({storage.hpitem1, storage.hpitem2, storage.manaitem1, storage.manaitem2}) do
-  local healingmacro = macro(800, function()
+  local healingmacro = macro(500, function()
     local hp = i <= 2 and player:getHealthPercent() or math.min(100, math.floor(100 * (player:getMana() / player:getMaxMana())))
     if healingInfo.max >= hp and hp >= healingInfo.min then
       if TargetBot then 
