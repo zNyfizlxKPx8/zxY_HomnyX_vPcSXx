@@ -2365,7 +2365,7 @@ local function buildCache(z)
   return result
 end
 
-macro(100, "X-Ray Floors", function()
+macro(500, "X-Ray Floors", function()
   local me = g_game.getLocalPlayer()
   if not me then return end
   local myPos = me:getPosition()
@@ -2373,8 +2373,11 @@ macro(100, "X-Ray Floors", function()
   local currentCache = cache[myPos.z]
   if not currentCache then return end
   for _, tile in pairs(currentCache) do
-    pcall(function() tile:setText("") end)
+  local txt = tile:getText()
+  if txt ~= "" and not txt:find("HOLD") then
+    tile:setText("")
   end
+end
   local specs = g_map.getSpectators(myPos, true)
   for _, spec in ipairs(specs) do
     if spec:isPlayer() and spec ~= me then
