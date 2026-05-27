@@ -1545,3 +1545,4 @@ macro(5000, initializeSystem)  -- despues de 5 segundos
 -- UI.Separator()
 
 print("UnderbotStatus Discord: Sistema activo!")
+end)
