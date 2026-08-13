@@ -1073,6 +1073,8 @@ UIWidget
   visible: false
 ]], modules.game_interface.getMapPanel())
 
+widgetArrow:setPhantom(true)
+
 if not storage["exiva/senseAdvanced"] then
   storage["exiva/senseAdvanced"] = {
     Spell = "exiva",
