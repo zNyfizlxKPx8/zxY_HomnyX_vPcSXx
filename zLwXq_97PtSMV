@@ -241,128 +241,117 @@ end
 -- ============================================
 checkAndLoad(function()
 
--- Mensaje bienvenida con imagen Y tu name
---primeros pasos
+-- ===============================
+-- Mensaje De Bienvenida
+-- ===============================
 local function getPlayerName()
-    return player:getName() or "Underbot"  -- Usa "Mad Genius" como valor por defecto si no se puede obtener el nombre
+    return player:getName() or "Underbot"
 end
 
--- Modificación en la definición de la UI
-g_ui.loadUIFromString([[
-mainuWindow < MainWindow
+local mainuWindow = setupUI([[
+UIWidget
   id: VentanaPrin
-  text: 
-  movable: false
   size: 340 200
-  -border: 1 black
-  image-source:
-  image-align: center
-  image-smooth: false
-  movable: false
+  anchors.bottom: parent.bottom
+  anchors.horizontalCenter: parent.horizontalCenter
+  margin-bottom: 190
+  visible: false
+  phantom: true
+  focusable: false
 
   UIWidget
     id: fondor1
-    anchors.top: parent.top
-    anchors.left: parent.left
-    anchors.right: parent.right
-    anchors.bottom: parent.bottom
-    margin-top: 1
-    margin-left: 1
-    margin-right: 1
-    margin-bottom: 1
-    size: 300 300
+    anchors.fill: parent
     image-source: /bot/MG/mg4.png
     image-align: center
     image-smooth: false
-    -- border: 1 black
+    phantom: true
+    focusable: false
 
   UIWidget
     id: im6
-    anchors.right: parent.right 
+    anchors.right: parent.right
     anchors.top: parent.top
     margin-top: 50
     margin-right: 80
-    -- border: 1 black
-    size: 30 30
+    size: 45 45
     image-source: /bot/MG/mg6.png
     image-smooth: true
     image-align: center
+    phantom: true
+    focusable: false
 
   UIWidget
     id: im25
-    anchors.right: parent.right 
+    anchors.left: parent.left
     anchors.top: parent.top
     margin-top: 50
-    margin-right: 210
-    -- border: 1 black
-    size: 30 30
+    margin-left: 80
+    size: 45 45
     image-source: /bot/MG/mg25.png
     image-smooth: true
     image-align: center
+    phantom: true
+    focusable: false
 
   UIWidget
     id: im14
-    anchors.left: parent.left 
+    anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
-    margin-top: 102
-    margin-left: 143
-    -- border: 1 black
-    size: 25 25
-    image-source:
+    margin-top: 130
+    size: 35 35
+    image-source: /bot/MG/mg14.png
     image-smooth: true
     image-align: center
+    phantom: true
+    focusable: false
 
   Label
     id: nameku
-    anchors.left: parent.left 
+    anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
-    margin-top: 60
-    margin-left: 100
-    -- border: 1 black
-    size: 100 18
+    margin-top: 85
+    size: 150 18
     text-align: center
-    text: Bienvenido 
+    text: Bienvenido
     color: orange
-    font: verdana-11px-monochrome 
+    font: verdana-11px-monochrome
+    phantom: true
+    focusable: false
 
   Label
     id: nameki
-    anchors.left: parent.left 
+    anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
-    margin-top: 78
-    margin-left: 61
-    -- border: 3 black
-    size: 190 25
+    margin-top: 105
+    size: 220 25
     text-align: center
     color: yellow
-    font: sans-bold-16px 
-    text: ]] .. getPlayerName() .. [[
-]])
+    font: sans-bold-16px
+    phantom: true
+    focusable: false
 
-local rootWidget = g_ui.getRootWidget()
-local mainuWindow = UI.createWindow('mainuWindow', rootWidget)
+]], modules.game_interface.getMapPanel())
 
+-- Forzamos al cliente a ignorar completamente la ventana para el mouse y teclado
+mainuWindow:setPhantom(true)
+mainuWindow:setFocusable(false)
 
--- Mostrar la ventana inmediatamente
---mainuWindow:show()
---mainuWindow:raise()
---mainuWindow:focus()
+-- Asignamos el nombre del jugador
+local nameLabel = mainuWindow:getChildById('nameki')
+if nameLabel then
+    nameLabel:setText(getPlayerName())
+end
 
---UI.Button("hide window", function()
-    --mainuWindow:hide()
-   -- mainuWindow:raise()
-   -- mainuWindow:focus()
---end)
+-- mostrar bienvenida
+mainuWindow:show()
 
--- Cerrar después de 3 segundos (3000 milisegundos)
---macro(5000, function()
-   -- if mainuWindow then  -- Verificación para evitar errores
-     --   mainuWindow:hide()
-   -- end
---end)
-
-
-
+-- cerrar después de 3.5 segundos
+schedule(3500, function()
+    if mainuWindow then
+        mainuWindow:hide()
+    end
+end)
 
 local customFolder = "/bot/MG/"  -- Carpeta nueva
 local imageUrls = {
@@ -471,20 +460,16 @@ local function downloadImage(url, filename)
             end
             
             downloadsCompleted = downloadsCompleted + 1
-            if downloadsCompleted == totalDownloads and needsReload then
-                --print("Recargando...")
-                reload()
-                mainuWindow:show()
-            end
+           if downloadsCompleted == totalDownloads then
+            mainuWindow:show()
+           end
         end)
     else
         --print("La imagen ya existe en: " .. customFolder .. filename)
         downloadsCompleted = downloadsCompleted + 1
-        if downloadsCompleted == totalDownloads and needsReload then
-            --print("Recargando...")
-            reload()
-            mainuWindow:show()
-        end
+        if downloadsCompleted == totalDownloads then
+    mainuWindow:show()
+end
     end
 end
 
@@ -516,9 +501,9 @@ local randomChar2 = characterImages[math.random(#characterImages)]
 mainuWindow:getChildById("im25"):setImageSource(customFolder .. randomChar2)
 
 
--- Cerrar de segundos (3000 milisegundos)
-macro(3500, function()
-    if mainuWindow then  -- Verificación para evitar errores
+-- Cerrar después de 3.5 segundos
+schedule(3500, function()
+    if mainuWindow then
         mainuWindow:hide()
     end
 end)
